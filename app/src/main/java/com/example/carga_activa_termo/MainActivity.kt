@@ -13,12 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -47,6 +50,8 @@ fun PantallaCargaActiva() {
     var lecturas by remember { mutableStateOf<List<Lectura>>(emptyList()) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
     var reconectando by remember { mutableStateOf(false) }
+    var modalAbierto by remember { mutableStateOf(false) }
+    var unidadSeleccionada by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
     val esModoMock = ApiClient.isMockMode()
 
@@ -92,12 +97,10 @@ fun PantallaCargaActiva() {
         }
     }
 
-    // Cargar datos al iniciar
     LaunchedEffect(Unit) {
         cargarDatos()
     }
 
-    // Actualizar cada 60 segundos solo si no hay error
     LaunchedEffect(mensajeError) {
         if (mensajeError == null) {
             while (true) {
@@ -107,151 +110,303 @@ fun PantallaCargaActiva() {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .then(if (modalAbierto) Modifier.blur(24.dp) else Modifier),
+                horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "CTE Ernesto Guevara",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 28.dp),
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "CTE Ernesto Guevara",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 28.dp),
+                textAlign = TextAlign.Center
+            )
 
-        // Si hay error, mostrar mensaje y botón de Reconectar
-        if (mensajeError != null) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(20.dp)),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
+            if (mensajeError != null) {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "⚠️",
-                        fontSize = 40.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = mensajeError!!,
-                        fontSize = 16.sp,
-                        color = Color(0xFF424242),
-                        textAlign = TextAlign.Center,
-                        lineHeight = 24.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { cargarDatos() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White
-                ),
-                enabled = !reconectando
-            ) {
-                if (reconectando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color(0xFF0D47A1),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Reconectando...",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D47A1)
-                    )
-                } else {
-                    Text(
-                        text = "⟳ Reintentar",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D47A1)
-                    )
-                }
-            }
-        } else {
-            // Sin error, mostrar tarjetas normales
-            val ultimaLectura = lecturas.lastOrNull()
-
-            if (ultimaLectura != null) {
-                TarjetaUnidad(
-                    numeroUnidad = 1,
-                    valor = ultimaLectura.lec1,
-                    onClick = { }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TarjetaUnidad(
-                    numeroUnidad = 2,
-                    valor = ultimaLectura.lec2,
-                    onClick = { }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TarjetaUnidad(
-                    numeroUnidad = 3,
-                    valor = ultimaLectura.lec3,
-                    onClick = { }
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Text(
-                    text = "Última Actualización: ${ultimaLectura.hora ?: "--:--"}",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp),
-                    contentAlignment = Alignment.Center
+                        .shadow(8.dp, RoundedCornerShape(20.dp)),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            color = Color.White,
-                            strokeWidth = 4.dp
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Cargando datos...",
-                            fontSize = 18.sp,
-                            color = Color.White
+                            text = "⚠️",
+                            fontSize = 40.sp
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = mensajeError!!,
+                            fontSize = 16.sp,
+                            color = Color(0xFF424242),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 24.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { cargarDatos() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        disabledContainerColor = Color.White
+                    ),
+                    enabled = !reconectando
+                ) {
+                    if (reconectando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color(0xFF0D47A1),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Reconectando...",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D47A1)
+                        )
+                    } else {
+                        Text(
+                            text = "⟳ Reintentar conexión",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D47A1)
+                        )
+                    }
+                }
+            } else {
+                val ultimaLectura = lecturas.lastOrNull()
+
+                if (ultimaLectura != null) {
+                    TarjetaUnidad(
+                        numeroUnidad = 1,
+                        valor = ultimaLectura.lec1,
+                        onClick = {
+                            unidadSeleccionada = 1
+                            modalAbierto = true
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TarjetaUnidad(
+                        numeroUnidad = 2,
+                        valor = ultimaLectura.lec2,
+                        onClick = {
+                            unidadSeleccionada = 2
+                            modalAbierto = true
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TarjetaUnidad(
+                        numeroUnidad = 3,
+                        valor = ultimaLectura.lec3,
+                        onClick = {
+                            unidadSeleccionada = 3
+                            modalAbierto = true
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Text(
+                        text = "Última Actualización: ${ultimaLectura.hora ?: "--:--"}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = Color.White,
+                                strokeWidth = 4.dp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Cargando datos...",
+                                fontSize = 18.sp,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Modal
+        if (modalAbierto) {
+            val ultimaLectura = lecturas.lastOrNull()
+            val valorUnidad = when (unidadSeleccionada) {
+                1 -> ultimaLectura?.lec1
+                2 -> ultimaLectura?.lec2
+                3 -> ultimaLectura?.lec3
+                else -> null
+            }
+
+            Dialog(
+                onDismissRequest = { },
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = false,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .shadow(12.dp, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Unidad No. $unidadSeleccionada",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D47A1),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.85f)
+                                .height(3.dp)
+                                .background(Color(0xFF1976D2))
+                        )
+
+                        Spacer(modifier = Modifier.height(22.dp))
+
+                        Text(
+                            text = "CARGA ACTIVA",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF757575),
+                            letterSpacing = 2.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = if (valorUnidad != null) {
+                                valorUnidad.roundToInt().toString()
+                            } else {
+                                "-"
+                            },
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF212121),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(26.dp))
+
+                        Text(
+                            text = "ÚLTIMA ACTUALIZACIÓN",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF757575),
+                            letterSpacing = 2.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = ultimaLectura?.hora ?: "--:--",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF212121),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(26.dp))
+
+                        Button(
+                            onClick = {
+                                // Funcionalidad a futuro
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF42A5F5)
+                            )
+                        ) {
+                            Text(
+                                text = "Gráfico Últimas 24 Horas",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Button(
+                            onClick = { modalAbierto = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF0D47A1)
+                            )
+                        ) {
+                            Text(
+                                text = "Cerrar",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
