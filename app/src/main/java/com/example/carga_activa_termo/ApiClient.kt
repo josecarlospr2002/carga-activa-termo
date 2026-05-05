@@ -14,7 +14,7 @@ object ApiClient {
 
     // true  → Usa datos falsos
     // false → Se conecta al servidor real
-    private const val USAR_MOCK = false
+    private const val USAR_MOCK = true
 
     val apiService: ApiService by lazy {
         Retrofit.Builder()
