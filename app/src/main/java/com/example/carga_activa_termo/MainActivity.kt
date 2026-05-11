@@ -28,6 +28,12 @@ import kotlin.math.roundToInt
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.offset
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,14 +41,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF1565C0)
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    color = Color(0xFF000000),
                 ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(2.dp),
+                        color = Color(0xFF1565C0),
+                        shape = RoundedCornerShape(30.dp)
+                    ){
                     PantallaCargaActiva()
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable
@@ -121,14 +135,49 @@ fun PantallaCargaActiva() {
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "CTE Ernesto Guevara",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.padding(bottom = 28.dp),
-                textAlign = TextAlign.Center
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp, start = 16.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Card(
+                    modifier = Modifier
+                        .size(86.dp)
+                        .offset(x = 28.dp, y = (-8).dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.che_guevara),
+                        contentDescription = "Che Guevara",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                Column (
+                    modifier = Modifier.offset(x = 32.dp)
+                ){
+                    Text(
+                        text = "CTE Ernesto",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "    Guevara",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
 
             if (mensajeError != null) {
                 Card(
@@ -235,14 +284,20 @@ fun PantallaCargaActiva() {
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    Text(
-                        text = "Última Actualización: ${ultimaLectura.hora ?: "--:--"}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    ) {
+                        Text(
+                            text = "Última Actualización: ${ultimaLectura.hora ?: "--:--"}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 } else {
                     Box(
                         modifier = Modifier
@@ -322,49 +377,79 @@ fun PantallaCargaActiva() {
 
                         Spacer(modifier = Modifier.height(22.dp))
 
-                        Text(
-                            text = "CARGA ACTIVA",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF757575),
-                            letterSpacing = 2.sp,
-                            textAlign = TextAlign.Center
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFFF5F5F5),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "CARGA ACTIVA",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF757575),
+                                    letterSpacing = 2.sp,
+                                    textAlign = TextAlign.Center
+                                )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = if (valorUnidad != null) {
-                                valorUnidad.roundToInt().toString()
-                            } else {
-                                "-"
-                            },
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF212121),
-                            textAlign = TextAlign.Center
-                        )
+                                Text(
+                                    text = if (valorUnidad != null) {
+                                        valorUnidad.roundToInt().toString()
+                                    } else {
+                                        "-"
+                                    },
+                                    fontSize = 48.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF212121),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
 
-                        Spacer(modifier = Modifier.height(26.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                        Text(
-                            text = "ÚLTIMA ACTUALIZACIÓN",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF757575),
-                            letterSpacing = 2.sp,
-                            textAlign = TextAlign.Center
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFFF5F5F5),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "ÚLTIMA ACTUALIZACIÓN",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF757575),
+                                    letterSpacing = 2.sp,
+                                    textAlign = TextAlign.Center
+                                )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = ultimaLectura?.hora ?: "--:--",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF212121),
-                            textAlign = TextAlign.Center
-                        )
+                                Text(
+                                    text = ultimaLectura?.hora ?: "--:--",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF212121),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(26.dp))
 
@@ -381,7 +466,7 @@ fun PantallaCargaActiva() {
                             )
                         ) {
                             Text(
-                                text = "Gráfico Últimas 24 Horas",
+                                text = "Gráfico 24 Horas Unidad $unidadSeleccionada",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
