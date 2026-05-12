@@ -30,10 +30,15 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.graphics.nativeCanvas
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,12 +56,13 @@ class MainActivity : ComponentActivity() {
                             .padding(2.dp),
                         color = Color(0xFF1565C0),
                         shape = RoundedCornerShape(30.dp)
-                    ){
-                    PantallaCargaActiva()
+                    ) {
+                        PantallaCargaActiva()
+                    }
                 }
             }
         }
-    } }
+    }
 }
 
 @Composable
@@ -66,6 +72,9 @@ fun PantallaCargaActiva() {
     var reconectando by remember { mutableStateOf(false) }
     var modalAbierto by remember { mutableStateOf(false) }
     var unidadSeleccionada by remember { mutableStateOf(0) }
+    var modalGraficoAbierto by remember { mutableStateOf(false) }
+    var datos24h by remember { mutableStateOf<List<Lectura>>(emptyList()) }
+    var cargandoGrafico by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val esModoMock = ApiClient.isMockMode()
 
@@ -131,7 +140,7 @@ fun PantallaCargaActiva() {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
                 .then(if (modalAbierto) Modifier.blur(24.dp) else Modifier),
-                horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -161,9 +170,9 @@ fun PantallaCargaActiva() {
 
                 Spacer(modifier = Modifier.width(20.dp))
 
-                Column (
+                Column(
                     modifier = Modifier.offset(x = 32.dp)
-                ){
+                ) {
                     Text(
                         text = "CTE Ernesto",
                         fontSize = 30.sp,
@@ -296,7 +305,43 @@ fun PantallaCargaActiva() {
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Button(
+                            onClick = {
+                                cargandoGrafico = true
+                                modalGraficoAbierto = true
+                                coroutineScope.launch {
+                                    try {
+                                        datos24h = if (esModoMock) {
+                                            ApiClient.getMockData24h()
+                                        } else {
+                                            ApiClient.apiService.getCargaActiva24h()
+                                        }
+                                    } catch (e: Exception) {
+                                        datos24h = emptyList()
+                                    } finally {
+                                        cargandoGrafico = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF42A5F5)
+                            )
+                        ) {
+                            Text(
+                                text = "Gráfico Últimas 24 Horas",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 } else {
                     Box(
@@ -325,7 +370,7 @@ fun PantallaCargaActiva() {
             }
         }
 
-        // Modal
+        // Modal de unidad
         if (modalAbierto) {
             val ultimaLectura = lecturas.lastOrNull()
             val valorUnidad = when (unidadSeleccionada) {
@@ -336,7 +381,7 @@ fun PantallaCargaActiva() {
             }
 
             Dialog(
-                onDismissRequest = { },
+                onDismissRequest = { modalAbierto = false },
                 properties = DialogProperties(
                     dismissOnBackPress = true,
                     dismissOnClickOutside = false,
@@ -488,6 +533,204 @@ fun PantallaCargaActiva() {
                             Text(
                                 text = "Cerrar",
                                 fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Modal Gráfico 24 Horas
+        if (modalGraficoAbierto) {
+            Dialog(
+                onDismissRequest = { modalGraficoAbierto = false },
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = false,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.55f)
+                        .padding(horizontal = 8.dp)
+                        .shadow(12.dp, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            //.rotate(90f)
+                            .fillMaxSize()
+                            .padding(12.dp)
+                    ) {
+                        if (cargandoGrafico) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(40.dp),
+                                        color = Color(0xFF0D47A1),
+                                        strokeWidth = 4.dp
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "Cargando datos...",
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF757575)
+                                    )
+                                }
+                            }
+                        } else if (datos24h.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Sin datos disponibles",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF757575)
+                                )
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .horizontalScroll(rememberScrollState())
+                            ) {
+                                val anchoGrafico = maxOf(600.dp, (datos24h.size * 30).dp)
+
+                                Canvas(
+                                    modifier = Modifier
+                                        .width(anchoGrafico)
+                                        .height(350.dp)
+                                        .padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                ) {
+                                    val ancho = size.width
+                                    val alto = size.height
+
+                                    val valores1 = datos24h.map {
+                                        if (it.lec1 == null || it.lec1 <= 0) 0.0 else it.lec1
+                                    }
+                                    val valores2 = datos24h.map {
+                                        if (it.lec2 == null || it.lec2 <= 0) 0.0 else it.lec2
+                                    }
+                                    val valores3 = datos24h.map {
+                                        if (it.lec3 == null || it.lec3 <= 0) 0.0 else it.lec3
+                                    }
+
+                                    val maxValor = 100.0
+                                    val minValor = 0.0
+                                    val rango = maxValor - minValor
+
+                                    val cantidadPuntos = datos24h.size
+
+                                    fun dibujarLinea(valores: List<Double>, color: Color, grosor: Float) {
+                                        if (valores.isEmpty() || cantidadPuntos < 2) return
+
+                                        val path = Path()
+                                        valores.forEachIndexed { index, valor ->
+                                            val x = (index.toFloat() / (cantidadPuntos - 1)) * ancho
+                                            val proporcion = ((valor - minValor) / rango).toFloat()
+                                            val y = alto - (proporcion * alto)
+
+                                            if (index == 0) path.moveTo(x, y)
+                                            else path.lineTo(x, y)
+                                        }
+
+                                        drawPath(
+                                            path = path,
+                                            color = color,
+                                            style = Stroke(width = grosor, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                        )
+                                    }
+
+                                    // Líneas horizontales y etiquetas - cada 10 unidades: 0, 10, 20...
+                                    for (i in 0..10) {
+                                        val y = alto - (alto * i / 10)
+                                        val colorLinea = if (i == 0) Color(0xFF9E9E9E) else Color(0xFFE0E0E0)
+                                        val grosorLinea = if (i == 0) 2f else 1f
+                                        drawLine(
+                                            color = colorLinea,
+                                            start = Offset(0f, y),
+                                            end = Offset(ancho, y),
+                                            strokeWidth = grosorLinea
+                                        )
+
+                                        // Etiqueta del valor en el eje Y
+                                        drawContext.canvas.nativeCanvas.drawText(
+                                            "${i * 10}",
+                                            -45f,
+                                            y + 4f,
+                                            android.graphics.Paint().apply {
+                                                color = android.graphics.Color.rgb(117, 117, 117)
+                                                textSize = 26f
+                                                textAlign = android.graphics.Paint.Align.LEFT
+                                                isAntiAlias = true
+                                            }
+                                        )
+                                    }
+
+                                    // Líneas verticales - una por cada hora
+                                    for (i in 0 until cantidadPuntos) {
+                                        val x = (i.toFloat() / (cantidadPuntos - 1)) * ancho
+                                        val colorLinea = if (i == 0) Color(0xFF9E9E9E) else Color(0xFFE0E0E0)
+                                        val grosorLinea = if (i == 0) 2f else 0.5f
+                                        drawLine(
+                                            color = colorLinea,
+                                            start = Offset(x, 0f),
+                                            end = Offset(x, alto),
+                                            strokeWidth = grosorLinea
+                                        )
+                                    }
+
+                                    dibujarLinea(valores1, Color(0xFF7B1FA2), 3f)  // Morado
+                                    dibujarLinea(valores2, Color(0xFF388E3C), 3f)  // Verde oscuro
+                                    dibujarLinea(valores3, Color(0xFFFFA000), 3f)  // Amarillo
+                                }
+
+                                // Eje X (horas) - cada 2 horas
+                                Row(
+                                    modifier = Modifier
+                                        .width(anchoGrafico)
+                                        .padding(start = 18.dp, end = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    for (i in datos24h.indices step 2) {
+                                        Text(
+                                            text = datos24h[i].hora ?: "",                                            fontSize = 8.sp,
+                                            color = Color(0xFF757575),
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .rotate(-50f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { modalGraficoAbierto = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(45.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF0D47A1)
+                            )
+                        ) {
+                            Text(
+                                text = "Cerrar",
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
