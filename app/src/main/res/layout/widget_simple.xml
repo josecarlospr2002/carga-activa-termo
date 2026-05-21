@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_simple_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tv_unidad1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="U.1 = -"
+        android:textColor="#1565C0"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_unidad2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="U.2 = -"
+        android:textColor="#1565C0"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tv_unidad3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="U.3 = -"
+        android:textColor="#1565C0"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <ImageView
+            android:id="@+id/circulo_estado"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:src="@drawable/circulo_rojo"
+            android:layout_marginEnd="6dp"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/tv_hora"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--:--"
+            android:textColor="#1565C0"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+    <ProgressBar
+        android:id="@+id/spinner"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:visibility="gone"
+        android:indeterminateTint="#1565C0"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tv_estado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Actualizar"
+        android:textColor="#1565C0"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

@@ -38,7 +38,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,15 +84,20 @@ fun PantallaCargaActiva() {
     var cargandoGrafico by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val esModoMock = ApiClient.isMockMode()
+    var snackbarMensaje by remember { mutableStateOf<String?>(null) }
+    var snackbarVisible by remember { mutableStateOf(false) }
 
     fun obtenerMensajeError(exception: Exception): String {
         return when (exception) {
             is UnknownHostException ->
                 "No se puede conectar al servidor.\nVerifica que estés conectado a la red de la empresa."
+
             is SocketTimeoutException ->
                 "El servidor está tardando mucho en responder.\nIntenta de nuevo en unos momentos."
+
             is ConnectException ->
                 "No hay conexión a Internet.\nRevisa tu WiFi o datos móviles."
+
             else -> {
                 val mensaje = exception.message ?: "Error desconocido"
                 if (mensaje.contains("Unable to resolve host")) {
@@ -555,7 +567,7 @@ fun PantallaCargaActiva() {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.55f)
+                        .fillMaxHeight(0.66f)
                         .padding(horizontal = 8.dp)
                         .shadow(12.dp, RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
@@ -564,10 +576,37 @@ fun PantallaCargaActiva() {
                 ) {
                     Column(
                         modifier = Modifier
-                            //.rotate(90f)
                             .fillMaxSize()
-                            .padding(12.dp)
+                            .padding(
+                                start = 8.dp,
+                                end = 12.dp,
+                                top = 8.dp,
+                                bottom = 4.dp
+                            )  // ← Menos padding vertical
                     ) {
+                        // Título del modal
+                        Text(
+                            text = "Comportamiento de las Unidades en las Últimas 24 Horas",
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D47A1),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Línea decorativa
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.85f)
+                                .height(3.dp)
+                                .background(Color(0xFF1976D2))
+                                .align(Alignment.CenterHorizontally)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         if (cargandoGrafico) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -599,142 +638,465 @@ fun PantallaCargaActiva() {
                                 )
                             }
                         } else {
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .horizontalScroll(rememberScrollState())
+                            val anchoGrafico = maxOf(600.dp, (datos24h.size * 30).dp)
+
+                            Row(
+                                modifier = Modifier.weight(1f)
                             ) {
-                                val anchoGrafico = maxOf(600.dp, (datos24h.size * 30).dp)
-
-                                Canvas(
+                                // Eje Y fijo a la izquierda
+                                Column(
                                     modifier = Modifier
-                                        .width(anchoGrafico)
-                                        .height(350.dp)
-                                        .padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                        .width(18.dp)
+                                        .fillMaxHeight()
+                                        .padding(bottom = 30.dp, start = 0.dp),
+                                    verticalArrangement = Arrangement.Top
                                 ) {
-                                    val ancho = size.width
-                                    val alto = size.height
-
-                                    val valores1 = datos24h.map {
-                                        if (it.lec1 == null || it.lec1 <= 0) 0.0 else it.lec1
-                                    }
-                                    val valores2 = datos24h.map {
-                                        if (it.lec2 == null || it.lec2 <= 0) 0.0 else it.lec2
-                                    }
-                                    val valores3 = datos24h.map {
-                                        if (it.lec3 == null || it.lec3 <= 0) 0.0 else it.lec3
-                                    }
-
-                                    val maxValor = 100.0
-                                    val minValor = 0.0
-                                    val rango = maxValor - minValor
-
-                                    val cantidadPuntos = datos24h.size
-
-                                    fun dibujarLinea(valores: List<Double>, color: Color, grosor: Float) {
-                                        if (valores.isEmpty() || cantidadPuntos < 2) return
-
-                                        val path = Path()
-                                        valores.forEachIndexed { index, valor ->
-                                            val x = (index.toFloat() / (cantidadPuntos - 1)) * ancho
-                                            val proporcion = ((valor - minValor) / rango).toFloat()
-                                            val y = alto - (proporcion * alto)
-
-                                            if (index == 0) path.moveTo(x, y)
-                                            else path.lineTo(x, y)
-                                        }
-
-                                        drawPath(
-                                            path = path,
-                                            color = color,
-                                            style = Stroke(width = grosor, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                        )
-                                    }
-
-                                    // Líneas horizontales y etiquetas - cada 10 unidades: 0, 10, 20...
-                                    for (i in 0..10) {
-                                        val y = alto - (alto * i / 10)
-                                        val colorLinea = if (i == 0) Color(0xFF9E9E9E) else Color(0xFFE0E0E0)
-                                        val grosorLinea = if (i == 0) 2f else 1f
-                                        drawLine(
-                                            color = colorLinea,
-                                            start = Offset(0f, y),
-                                            end = Offset(ancho, y),
-                                            strokeWidth = grosorLinea
-                                        )
-
-                                        // Etiqueta del valor en el eje Y
-                                        drawContext.canvas.nativeCanvas.drawText(
-                                            "${i * 10}",
-                                            -45f,
-                                            y + 4f,
-                                            android.graphics.Paint().apply {
-                                                color = android.graphics.Color.rgb(117, 117, 117)
-                                                textSize = 26f
-                                                textAlign = android.graphics.Paint.Align.LEFT
-                                                isAntiAlias = true
-                                            }
-                                        )
-                                    }
-
-                                    // Líneas verticales - una por cada hora
-                                    for (i in 0 until cantidadPuntos) {
-                                        val x = (i.toFloat() / (cantidadPuntos - 1)) * ancho
-                                        val colorLinea = if (i == 0) Color(0xFF9E9E9E) else Color(0xFFE0E0E0)
-                                        val grosorLinea = if (i == 0) 2f else 0.5f
-                                        drawLine(
-                                            color = colorLinea,
-                                            start = Offset(x, 0f),
-                                            end = Offset(x, alto),
-                                            strokeWidth = grosorLinea
-                                        )
-                                    }
-
-                                    dibujarLinea(valores1, Color(0xFF7B1FA2), 3f)  // Morado
-                                    dibujarLinea(valores2, Color(0xFF388E3C), 3f)  // Verde oscuro
-                                    dibujarLinea(valores3, Color(0xFFFFA000), 3f)  // Amarillo
-                                }
-
-                                // Eje X (horas) - cada 2 horas
-                                Row(
-                                    modifier = Modifier
-                                        .width(anchoGrafico)
-                                        .padding(start = 18.dp, end = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    for (i in datos24h.indices step 2) {
+                                    for (i in 10 downTo 0) {
                                         Text(
-                                            text = datos24h[i].hora ?: "",                                            fontSize = 8.sp,
-                                            color = Color(0xFF757575),
+                                            text = "${i * 10}",
+                                            fontSize = 9.sp,
+                                            color = Color(0xFF656565),
                                             textAlign = TextAlign.Center,
                                             modifier = Modifier
-                                                .weight(1f)
-                                                .rotate(-50f)
+                                                .fillMaxWidth()
+                                                .padding(vertical = 1.dp)
                                         )
+                                    }
+                                }
+
+                                // Gráfico con scroll horizontal
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .horizontalScroll(rememberScrollState())
+                                ) {
+                                    Canvas(
+                                        modifier = Modifier
+                                            .width(anchoGrafico)
+                                            .height(320.dp)
+                                            .padding(
+                                                start = 4.dp,
+                                                end = 8.dp,
+                                                top = 4.dp,
+                                                bottom = 4.dp
+                                            )
+                                            .pointerInput(datos24h) {
+                                                detectTapGestures { tapOffset ->
+                                                    val anchoPx = size.width.toFloat()
+                                                    val altoPx = size.height.toFloat()
+
+                                                    // Índice más cercano en X
+                                                    val indice =
+                                                        ((tapOffset.x / anchoPx) * (datos24h.size - 1))
+                                                            .roundToInt()
+                                                            .coerceIn(0, datos24h.size - 1)
+
+                                                    val valoresUnidad1 =
+                                                        datos24h.map {
+                                                            if (it.lec1 == null || it.lec1 <= 0) 0.0 else it.lec1
+                                                        }
+                                                    val valoresUnidad2 =
+                                                        datos24h.map {
+                                                            if (it.lec2 == null || it.lec2 <= 0) 0.0 else it.lec2
+                                                        }
+                                                    val valoresUnidad3 =
+                                                        datos24h.map {
+                                                            if (it.lec3 == null || it.lec3 <= 0) 0.0 else it.lec3
+                                                        }
+
+                                                    var mejorUnidad = "1"
+                                                    var mejorDist = Float.MAX_VALUE
+
+                                                    // Unidad 1
+                                                    val v1 = valoresUnidad1[indice]
+                                                    val prop1 = (v1 / 100.0).toFloat()
+                                                    val y1 = altoPx - (prop1 * altoPx)
+                                                    val dist1 = kotlin.math.abs(tapOffset.y - y1)
+                                                    if (dist1 < mejorDist) {
+                                                        mejorDist = dist1
+                                                        mejorUnidad = "1"
+                                                    }
+
+                                                    // Unidad 2
+                                                    val v2 = valoresUnidad2[indice]
+                                                    val prop2 = (v2 / 100.0).toFloat()
+                                                    val y2 = altoPx - (prop2 * altoPx)
+                                                    val dist2 = kotlin.math.abs(tapOffset.y - y2)
+                                                    if (dist2 < mejorDist) {
+                                                        mejorDist = dist2
+                                                        mejorUnidad = "2"
+                                                    }
+
+                                                    // Unidad 3
+                                                    val v3 = valoresUnidad3[indice]
+                                                    val prop3 = (v3 / 100.0).toFloat()
+                                                    val y3 = altoPx - (prop3 * altoPx)
+                                                    val dist3 = kotlin.math.abs(tapOffset.y - y3)
+                                                    if (dist3 < mejorDist) {
+                                                        mejorDist = dist3
+                                                        mejorUnidad = "3"
+                                                    }
+
+                                                    if (mejorDist < 50f) {
+                                                        val hora = datos24h.getOrNull(indice)?.hora
+                                                            ?: "--:--"
+
+                                                        val v1 =
+                                                            if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
+                                                        val v2 =
+                                                            if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
+                                                        val v3 =
+                                                            if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
+
+                                                        val grupos =
+                                                            mutableMapOf<Int, MutableList<String>>()
+                                                        grupos.getOrPut(v1) { mutableListOf() }
+                                                            .add("Unidad 1")
+                                                        grupos.getOrPut(v2) { mutableListOf() }
+                                                            .add("Unidad 2")
+                                                        grupos.getOrPut(v3) { mutableListOf() }
+                                                            .add("Unidad 3")
+
+                                                        val valorTocado = when (mejorUnidad) {
+                                                            "1" -> v1
+                                                            "2" -> v2
+                                                            else -> v3
+                                                        }
+
+                                                        val unidadesDelGrupo = grupos[valorTocado]
+                                                            ?: listOf("Unidad $mejorUnidad")
+
+                                                        snackbarMensaje =
+                                                            if (unidadesDelGrupo.size > 1) {
+                                                                "${unidadesDelGrupo.joinToString(", ") { "$it = $valorTocado" }} a las $hora"
+                                                            } else {
+                                                                "Unidad $mejorUnidad = $valorTocado a las $hora"
+                                                            }
+
+                                                        snackbarVisible = true
+                                                    }
+                                                }
+                                            }
+                                    ) {
+                                        val ancho = size.width
+                                        val alto = size.height
+
+                                        val valores1 = datos24h.map {
+                                            if (it.lec1 == null || it.lec1 <= 0) 0.0 else it.lec1
+                                        }
+                                        val valores2 = datos24h.map {
+                                            if (it.lec2 == null || it.lec2 <= 0) 0.0 else it.lec2
+                                        }
+                                        val valores3 = datos24h.map {
+                                            if (it.lec3 == null || it.lec3 <= 0) 0.0 else it.lec3
+                                        }
+
+                                        val maxValor = 100.0
+                                        val minValor = 0.0
+                                        val rango = maxValor - minValor
+
+                                        val cantidadPuntos = datos24h.size
+
+                                        fun dibujarLinea(
+                                            valores: List<Double>,
+                                            color: Color,
+                                            grosor: Float
+                                        ) {
+                                            if (valores.isEmpty() || cantidadPuntos < 2) return
+
+                                            val path = Path()
+                                            valores.forEachIndexed { index, valor ->
+                                                val x =
+                                                    (index.toFloat() / (cantidadPuntos - 1)) * ancho
+                                                val proporcion =
+                                                    ((valor - minValor) / rango).toFloat()
+                                                val y = alto - (proporcion * alto)
+
+                                                if (index == 0) path.moveTo(x, y)
+                                                else path.lineTo(x, y)
+                                            }
+
+                                            drawPath(
+                                                path = path,
+                                                color = color,
+                                                style = Stroke(
+                                                    width = grosor,
+                                                    cap = StrokeCap.Round,
+                                                    join = StrokeJoin.Round
+                                                )
+                                            )
+                                        }
+
+                                        fun dibujarPuntos(valores: List<Double>, color: Color) {
+                                            valores.forEachIndexed { index, valor ->
+                                                val x =
+                                                    (index.toFloat() / (cantidadPuntos - 1)) * ancho
+                                                val proporcion =
+                                                    ((valor - minValor) / rango).toFloat()
+                                                val y = alto - (proporcion * alto)
+
+                                                drawCircle(
+                                                    color = Color.White,
+                                                    radius = 14f,
+                                                    center = Offset(x, y)
+                                                )
+                                                drawCircle(
+                                                    color = color,
+                                                    radius = 11f,
+                                                    center = Offset(x, y)
+                                                )
+                                            }
+                                        }
+
+                                        // ========================================
+                                        // Líneas horizontales ALINEADAS (0, 10, 20... 100)
+                                        // ========================================
+                                        for (i in 0..10) {
+                                            val valor = i * 10.0  // 0, 10, 20, 30... 100
+                                            val proporcion = (valor / 100.0).toFloat()
+                                            val y = alto - (proporcion * alto)
+
+                                            val colorLinea = when (i) {
+                                                0 -> Color(0xFF000000)     // Línea base (0)
+                                                10 -> Color(0xFF000000)    // Línea superior (100)
+                                                else -> Color(0xFFBDBDBD)  // Líneas intermedias
+                                            }
+                                            val grosorLinea = when (i) {
+                                                0, 10 -> 2f
+                                                else -> 1f
+                                            }
+
+                                            drawLine(
+                                                color = colorLinea,
+                                                start = Offset(0f, y),
+                                                end = Offset(ancho, y),
+                                                strokeWidth = grosorLinea
+                                            )
+                                        }
+
+                                        // Líneas verticales (guía)
+                                        for (i in 0 until cantidadPuntos) {
+                                            val x = (i.toFloat() / (cantidadPuntos - 1)) * ancho
+                                            val colorLinea =
+                                                if (i == 0) Color(0xFF000000) else Color(0xFF737373)
+                                            val grosorLinea = if (i == 0) 2f else 0.5f
+                                            drawLine(
+                                                color = colorLinea,
+                                                start = Offset(x, 0f),
+                                                end = Offset(x, alto),
+                                                strokeWidth = grosorLinea
+                                            )
+                                        }
+
+                                        // Dibujar líneas de datos
+                                        dibujarLinea(
+                                            valores3,
+                                            Color(0xFFFF5722),
+                                            3f
+                                        )   // Unidad 3 - Naranja (abajo)
+                                        dibujarLinea(
+                                            valores2,
+                                            Color(0xFF388E3C),
+                                            3f
+                                        )   // Unidad 2 - Verde (medio)
+                                        dibujarLinea(
+                                            valores1,
+                                            Color(0xFF7B1FA2),
+                                            3f
+                                        )   // Unidad 1 - Morado (arriba)
+
+// 2. Dibujar puntos: Unidad 3 primero (abajo)
+                                        dibujarPuntos(
+                                            valores3,
+                                            Color(0xFFFFA000)
+                                        )       // Unidad 3 - Naranja (abajo)
+                                        dibujarPuntos(
+                                            valores2,
+                                            Color(0xFF388E3C)
+                                        )       // Unidad 2 - Verde (medio)
+                                        dibujarPuntos(
+                                            valores1,
+                                            Color(0xFF7B1FA2)
+                                        )       // Unidad 1 - Morado (arriba)
+                                    }
+
+                                    // Etiquetas del eje X (horas) - CORREGIDO
+                                    Row(
+                                        modifier = Modifier
+                                            .width(anchoGrafico)
+                                            .padding(start = 4.dp, end = 8.dp, top = 3.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        for (i in datos24h.indices step 2) {
+                                            Text(
+                                                text = datos24h[i].hora ?: "", fontSize = 8.sp,
+                                                color = Color(0xFF656565),
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .rotate(35f)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        // ========================================
+                        // CONTENEDOR PRINCIPAL CON BOX (para que el Snackbar flote)
+                        // ========================================
 
-                        Button(
-                            onClick = { modalGraficoAbierto = false },
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(45.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF0D47A1)
-                            )
+                                .wrapContentHeight()  // ← No fuerza altura, se adapta al contenido
                         ) {
-                            Text(
-                                text = "Cerrar",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            // Contenido normal (leyenda + botón)
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // Leyenda de colores
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Unidad 1 - Morado
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .background(
+                                                    Color(0xFF7B1FA2),
+                                                    RoundedCornerShape(2.dp)
+                                                )
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Unidad 1",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF757575),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+
+                                    // Unidad 2 - Verde
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .background(
+                                                    Color(0xFF388E3C),
+                                                    RoundedCornerShape(2.dp)
+                                                )
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Unidad 2",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF757575),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+
+                                    // Unidad 3 - Naranja
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .background(
+                                                    Color(0xFFFF5722),
+                                                    RoundedCornerShape(2.dp)
+                                                )
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Unidad 3",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF757575),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Button(
+                                    onClick = { modalGraficoAbierto = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(45.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF0D47A1)
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Cerrar",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+
+                                // Espacio reservado para el Snackbar (siempre ocupa el mismo espacio)
+                                Spacer(modifier = Modifier.height(4.dp))  // ← Espacio fijo SIEMPRE
+                            }
+
+                            // Snackbar FLOTANTE (superpuesto, no empuja nada)
+                            if (snackbarVisible) {
+                                Card(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxWidth()
+                                        .padding(bottom = 4.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF323232)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = snackbarMensaje ?: "",
+                                            fontSize = 14.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        TextButton(
+                                            onClick = { snackbarVisible = false }
+                                        ) {
+                                            Text(
+                                                text = "OK",
+                                                fontSize = 14.sp,
+                                                color = Color(0xFF4FC3F7),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Ocultar automáticamente después de 3 segundos
+                                LaunchedEffect(snackbarVisible) {
+                                    if (snackbarVisible) {
+                                        delay(3000)
+                                        snackbarVisible = false
+                                    }
+                                }
+                            }
                         }
+// ========================================
+// FIN DEL CONTENEDOR
+// ========================================
                     }
                 }
             }

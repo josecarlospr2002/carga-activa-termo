@@ -42,6 +42,18 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".CargaActivaWidgetSimple"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="ACTUALIZAR_WIDGET_SIMPLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_simple_info" />
+        </receiver>
+
     </application>
 
 </manifest>

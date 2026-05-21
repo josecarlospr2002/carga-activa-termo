@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true">
+    <!-- Permitir tráfico HTTP SOLO para el dominio específico -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">web.ctehabana.une.cu</domain>
+    </domain-config>
+
+    <!-- Configuración base para el resto -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
