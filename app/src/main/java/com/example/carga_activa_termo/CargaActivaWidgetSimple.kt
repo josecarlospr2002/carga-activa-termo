@@ -13,9 +13,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 class CargaActivaWidgetSimple : AppWidgetProvider() {
 
@@ -27,7 +24,6 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.widget_simple)
 
-            // Valores iniciales
             views.setTextViewText(R.id.tv_unidad1, "U.1 = -")
             views.setTextViewText(R.id.tv_unidad2, "U.2 = -")
             views.setTextViewText(R.id.tv_unidad3, "U.3 = -")
@@ -36,7 +32,6 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
             views.setInt(R.id.spinner, "setVisibility", View.GONE)
             views.setInt(R.id.circulo_estado, "setVisibility", View.INVISIBLE)
 
-            // Click en el widget → actualizar
             val intentActualizar = Intent(context, CargaActivaWidgetSimple::class.java).apply {
                 action = "ACTUALIZAR_WIDGET_SIMPLE"
             }
@@ -58,7 +53,6 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
             val componentName = android.content.ComponentName(context, CargaActivaWidgetSimple::class.java)
             val ids = appWidgetManager.getAppWidgetIds(componentName)
 
-            // Mostrar "Cargando..." y spinner
             for (id in ids) {
                 val views = RemoteViews(context.packageName, R.layout.widget_simple)
                 views.setTextViewText(R.id.tv_estado, "Cargando...")
@@ -74,7 +68,6 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
                     val lecturas: List<Lectura> = if (esModoMock) {
                         ApiClient.getMockData()
                     } else {
-                        // Timeout más largo para widgets en Android 15
                         withTimeout(20000) {
                             ApiClient.apiService.getCargaActiva()
                         }
@@ -109,7 +102,6 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
 
                         views.setInt(R.id.spinner, "setVisibility", View.GONE)
 
-                        // Reconfigurar click → actualizar
                         val intentActualizar = Intent(context, CargaActivaWidgetSimple::class.java).apply {
                             action = "ACTUALIZAR_WIDGET_SIMPLE"
                         }

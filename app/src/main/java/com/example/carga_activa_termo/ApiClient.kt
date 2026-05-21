@@ -34,6 +34,7 @@ object ApiClient {
             .readTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
+
             // Forzar HTTP/1.1 para evitar problemas en widgets
             .protocols(listOf(Protocol.HTTP_1_1))
 
@@ -59,7 +60,7 @@ object ApiClient {
     val apiService: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okHttpClient)  // Usar el cliente personalizado
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)

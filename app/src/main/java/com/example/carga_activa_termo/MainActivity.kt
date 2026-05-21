@@ -40,11 +40,6 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 
 class MainActivity : ComponentActivity() {
@@ -86,6 +81,9 @@ fun PantallaCargaActiva() {
     val esModoMock = ApiClient.isMockMode()
     var snackbarMensaje by remember { mutableStateOf<String?>(null) }
     var snackbarVisible by remember { mutableStateOf(false) }
+    var mostrarUnidad1 by remember { mutableStateOf(true) }
+    var mostrarUnidad2 by remember { mutableStateOf(true) }
+    var mostrarUnidad3 by remember { mutableStateOf(true) }
 
     fun obtenerMensajeError(exception: Exception): String {
         return when (exception) {
@@ -577,14 +575,8 @@ fun PantallaCargaActiva() {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(
-                                start = 8.dp,
-                                end = 12.dp,
-                                top = 8.dp,
-                                bottom = 4.dp
-                            )  // ← Menos padding vertical
+                            .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 4.dp)
                     ) {
-                        // Título del modal
                         Text(
                             text = "Comportamiento de las Unidades en las Últimas 24 Horas",
                             fontSize = 21.sp,
@@ -596,7 +588,6 @@ fun PantallaCargaActiva() {
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Línea decorativa
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(0.85f)
@@ -664,7 +655,7 @@ fun PantallaCargaActiva() {
                                     }
                                 }
 
-                                // Gráfico con scroll horizontal
+                                // Scroll horizontal
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
@@ -685,7 +676,6 @@ fun PantallaCargaActiva() {
                                                     val anchoPx = size.width.toFloat()
                                                     val altoPx = size.height.toFloat()
 
-                                                    // Índice más cercano en X
                                                     val indice =
                                                         ((tapOffset.x / anchoPx) * (datos24h.size - 1))
                                                             .roundToInt()
@@ -848,18 +838,15 @@ fun PantallaCargaActiva() {
                                             }
                                         }
 
-                                        // ========================================
-                                        // Líneas horizontales ALINEADAS (0, 10, 20... 100)
-                                        // ========================================
                                         for (i in 0..10) {
-                                            val valor = i * 10.0  // 0, 10, 20, 30... 100
+                                            val valor = i * 10.0           // 0, 10, 20, 30... 100
                                             val proporcion = (valor / 100.0).toFloat()
                                             val y = alto - (proporcion * alto)
 
                                             val colorLinea = when (i) {
-                                                0 -> Color(0xFF000000)     // Línea base (0)
-                                                10 -> Color(0xFF000000)    // Línea superior (100)
-                                                else -> Color(0xFFBDBDBD)  // Líneas intermedias
+                                                0 -> Color(0xFF000000)
+                                                10 -> Color(0xFF000000)
+                                                else -> Color(0xFFBDBDBD)
                                             }
                                             val grosorLinea = when (i) {
                                                 0, 10 -> 2f
@@ -874,7 +861,6 @@ fun PantallaCargaActiva() {
                                             )
                                         }
 
-                                        // Líneas verticales (guía)
                                         for (i in 0 until cantidadPuntos) {
                                             val x = (i.toFloat() / (cantidadPuntos - 1)) * ancho
                                             val colorLinea =
@@ -889,38 +875,17 @@ fun PantallaCargaActiva() {
                                         }
 
                                         // Dibujar líneas de datos
-                                        dibujarLinea(
-                                            valores3,
-                                            Color(0xFFFF5722),
-                                            3f
-                                        )   // Unidad 3 - Naranja (abajo)
-                                        dibujarLinea(
-                                            valores2,
-                                            Color(0xFF388E3C),
-                                            3f
-                                        )   // Unidad 2 - Verde (medio)
-                                        dibujarLinea(
-                                            valores1,
-                                            Color(0xFF7B1FA2),
-                                            3f
-                                        )   // Unidad 1 - Morado (arriba)
+                                        if (mostrarUnidad3) dibujarLinea(valores3, Color(0xFFFF5722), 3f)
+                                        if (mostrarUnidad2) dibujarLinea(valores2, Color(0xFF388E3C), 3f)
+                                        if (mostrarUnidad1) dibujarLinea(valores1, Color(0xFF7B1FA2), 3f)
 
-// 2. Dibujar puntos: Unidad 3 primero (abajo)
-                                        dibujarPuntos(
-                                            valores3,
-                                            Color(0xFFFFA000)
-                                        )       // Unidad 3 - Naranja (abajo)
-                                        dibujarPuntos(
-                                            valores2,
-                                            Color(0xFF388E3C)
-                                        )       // Unidad 2 - Verde (medio)
-                                        dibujarPuntos(
-                                            valores1,
-                                            Color(0xFF7B1FA2)
-                                        )       // Unidad 1 - Morado (arriba)
+                                        // Dibujar puntos
+                                        if (mostrarUnidad3) dibujarPuntos(valores3, Color(0xFFFFA000))
+                                        if (mostrarUnidad2) dibujarPuntos(valores2, Color(0xFF388E3C))
+                                        if (mostrarUnidad1) dibujarPuntos(valores1, Color(0xFF7B1FA2))
                                     }
 
-                                    // Etiquetas del eje X (horas) - CORREGIDO
+                                    // Etiquetas del eje X (horas)
                                     Row(
                                         modifier = Modifier
                                             .width(anchoGrafico)
@@ -942,20 +907,15 @@ fun PantallaCargaActiva() {
                             }
                         }
 
-                        // ========================================
-                        // CONTENEDOR PRINCIPAL CON BOX (para que el Snackbar flote)
-                        // ========================================
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .wrapContentHeight()  // ← No fuerza altura, se adapta al contenido
+                                .wrapContentHeight()
                         ) {
-                            // Contenido normal (leyenda + botón)
                             Column(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // Leyenda de colores
+                                // Leyenda de colores interactiva
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -963,60 +923,75 @@ fun PantallaCargaActiva() {
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Unidad 1 - Morado
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Unidad 1
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .clickable { mostrarUnidad1 = !mostrarUnidad1 }
+                                            .padding(4.dp)
+                                    ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    Color(0xFF7B1FA2),
-                                                    RoundedCornerShape(2.dp)
+                                                    color = if (mostrarUnidad1) Color(0xFF7B1FA2) else Color(0xFFBDBDBD),
+                                                    shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Unidad 1",
                                             fontSize = 12.sp,
-                                            color = Color(0xFF757575),
-                                            fontWeight = FontWeight.Medium
+                                            color = if (mostrarUnidad1) Color(0xFF757575) else Color(0xFFBDBDBD),
+                                            fontWeight = if (mostrarUnidad1) FontWeight.Medium else FontWeight.Normal
                                         )
                                     }
 
-                                    // Unidad 2 - Verde
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Unidad 2
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .clickable { mostrarUnidad2 = !mostrarUnidad2 }
+                                            .padding(4.dp)
+                                    ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    Color(0xFF388E3C),
-                                                    RoundedCornerShape(2.dp)
+                                                    color = if (mostrarUnidad2) Color(0xFF388E3C) else Color(0xFFBDBDBD),
+                                                    shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Unidad 2",
                                             fontSize = 12.sp,
-                                            color = Color(0xFF757575),
-                                            fontWeight = FontWeight.Medium
+                                            color = if (mostrarUnidad2) Color(0xFF757575) else Color(0xFFBDBDBD),
+                                            fontWeight = if (mostrarUnidad2) FontWeight.Medium else FontWeight.Normal
                                         )
                                     }
 
-                                    // Unidad 3 - Naranja
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Unidad 3
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .clickable { mostrarUnidad3 = !mostrarUnidad3 }
+                                            .padding(4.dp)
+                                    ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    Color(0xFFFF5722),
-                                                    RoundedCornerShape(2.dp)
+                                                    color = if (mostrarUnidad3) Color(0xFFFF5722) else Color(0xFFBDBDBD),
+                                                    shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Unidad 3",
                                             fontSize = 12.sp,
-                                            color = Color(0xFF757575),
-                                            fontWeight = FontWeight.Medium
+                                            color = if (mostrarUnidad3) Color(0xFF757575) else Color(0xFFBDBDBD),
+                                            fontWeight = if (mostrarUnidad3) FontWeight.Medium else FontWeight.Normal
                                         )
                                     }
                                 }
@@ -1041,11 +1016,10 @@ fun PantallaCargaActiva() {
                                     )
                                 }
 
-                                // Espacio reservado para el Snackbar (siempre ocupa el mismo espacio)
-                                Spacer(modifier = Modifier.height(4.dp))  // ← Espacio fijo SIEMPRE
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
 
-                            // Snackbar FLOTANTE (superpuesto, no empuja nada)
+                            // Snackbar flotante
                             if (snackbarVisible) {
                                 Card(
                                     modifier = Modifier
@@ -1094,9 +1068,7 @@ fun PantallaCargaActiva() {
                                 }
                             }
                         }
-// ========================================
-// FIN DEL CONTENEDOR
-// ========================================
+
                     }
                 }
             }
