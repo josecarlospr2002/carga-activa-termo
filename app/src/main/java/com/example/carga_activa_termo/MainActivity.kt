@@ -84,6 +84,7 @@ fun PantallaCargaActiva() {
     var mostrarUnidad1 by remember { mutableStateOf(true) }
     var mostrarUnidad2 by remember { mutableStateOf(true) }
     var mostrarUnidad3 by remember { mutableStateOf(true) }
+    var graficoUnidadEspecifica by remember { mutableStateOf(false) }
 
     fun obtenerMensajeError(exception: Exception): String {
         return when (exception) {
@@ -319,6 +320,12 @@ fun PantallaCargaActiva() {
 
                         Button(
                             onClick = {
+                                mostrarUnidad1 = true
+                                mostrarUnidad2 = true
+                                mostrarUnidad3 = true
+
+                                graficoUnidadEspecifica = false
+
                                 cargandoGrafico = true
                                 modalGraficoAbierto = true
                                 coroutineScope.launch {
@@ -510,7 +517,32 @@ fun PantallaCargaActiva() {
 
                         Button(
                             onClick = {
-                                // Funcionalidad a futuro
+                                modalAbierto = false
+
+                                // Filtros para mostrar solo la unidad seleccionada
+                                mostrarUnidad1 = true
+                                mostrarUnidad2 = true
+                                mostrarUnidad3 = true
+
+                                // Marcar que viene de una unidad específica
+                                graficoUnidadEspecifica = true
+
+                                // Cargar datos y abrir gráfico
+                                cargandoGrafico = true
+                                modalGraficoAbierto = true
+                                coroutineScope.launch {
+                                    try {
+                                        datos24h = if (esModoMock) {
+                                            ApiClient.getMockData24h()
+                                        } else {
+                                            ApiClient.apiService.getCargaActiva24h()
+                                        }
+                                    } catch (e: Exception) {
+                                        datos24h = emptyList()
+                                    } finally {
+                                        cargandoGrafico = false
+                                    }
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -731,39 +763,70 @@ fun PantallaCargaActiva() {
                                                         val hora = datos24h.getOrNull(indice)?.hora
                                                             ?: "--:--"
 
-                                                        val v1 =
-                                                            if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
-                                                        val v2 =
-                                                            if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
-                                                        val v3 =
-                                                            if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
+                                                        if (!graficoUnidadEspecifica) {
+                                                            val v1 =
+                                                                if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
+                                                            val v2 =
+                                                                if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
+                                                            val v3 =
+                                                                if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
 
-                                                        val grupos =
-                                                            mutableMapOf<Int, MutableList<String>>()
-                                                        grupos.getOrPut(v1) { mutableListOf() }
-                                                            .add("Unidad 1")
-                                                        grupos.getOrPut(v2) { mutableListOf() }
-                                                            .add("Unidad 2")
-                                                        grupos.getOrPut(v3) { mutableListOf() }
-                                                            .add("Unidad 3")
+                                                            val grupos =
+                                                                mutableMapOf<Int, MutableList<String>>()
+                                                            grupos.getOrPut(v1) { mutableListOf() }
+                                                                .add("Unidad 1")
+                                                            grupos.getOrPut(v2) { mutableListOf() }
+                                                                .add("Unidad 2")
+                                                            grupos.getOrPut(v3) { mutableListOf() }
+                                                                .add("Unidad 3")
 
-                                                        val valorTocado = when (mejorUnidad) {
-                                                            "1" -> v1
-                                                            "2" -> v2
-                                                            else -> v3
-                                                        }
-
-                                                        val unidadesDelGrupo = grupos[valorTocado]
-                                                            ?: listOf("Unidad $mejorUnidad")
-
-                                                        snackbarMensaje =
-                                                            if (unidadesDelGrupo.size > 1) {
-                                                                "${unidadesDelGrupo.joinToString(", ") { "$it = $valorTocado" }} a las $hora"
-                                                            } else {
-                                                                "Unidad $mejorUnidad = $valorTocado a las $hora"
+                                                            val valorTocado = when (mejorUnidad) {
+                                                                "1" -> v1
+                                                                "2" -> v2
+                                                                else -> v3
                                                             }
 
-                                                        snackbarVisible = true
+                                                            val unidadesDelGrupo =
+                                                                grupos[valorTocado]
+                                                                    ?: listOf("Unidad $mejorUnidad")
+
+                                                            snackbarMensaje =
+                                                                if (unidadesDelGrupo.size > 1) {
+                                                                    "${
+                                                                        unidadesDelGrupo.joinToString(
+                                                                            ", "
+                                                                        ) { "$it = $valorTocado" }
+                                                                    } a las $hora"
+                                                                } else {
+                                                                    "Unidad $mejorUnidad = $valorTocado a las $hora"
+                                                                }
+                                                        } else {
+                                                            val valorSeleccionado =
+                                                                when (unidadSeleccionada) {
+                                                                    1 -> if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
+                                                                    2 -> if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
+                                                                    else -> if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
+                                                                }
+
+                                                            // Verificar que el toque está CERCA del punto de la unidad seleccionada
+                                                            val ySeleccionada =
+                                                                when (unidadSeleccionada) {
+                                                                    1 -> y1
+                                                                    2 -> y2
+                                                                    else -> y3
+                                                                }
+
+                                                            if (kotlin.math.abs(tapOffset.y - ySeleccionada) < 50f) {
+                                                                snackbarMensaje =
+                                                                    "Unidad $unidadSeleccionada = $valorSeleccionado a las $hora"
+                                                                snackbarVisible = true
+                                                            }
+                                                        }
+
+                                                        // Modo normal, siempre mostrar
+                                                        if (!graficoUnidadEspecifica) {
+                                                            snackbarVisible = true
+                                                        }
                                                     }
                                                 }
                                             }
@@ -875,14 +938,29 @@ fun PantallaCargaActiva() {
                                         }
 
                                         // Dibujar líneas de datos
-                                        if (mostrarUnidad3) dibujarLinea(valores3, Color(0xFFFF5722), 3f)
-                                        if (mostrarUnidad2) dibujarLinea(valores2, Color(0xFF388E3C), 3f)
-                                        if (mostrarUnidad1) dibujarLinea(valores1, Color(0xFF7B1FA2), 3f)
+                                        // Unidad 3
+                                        if (mostrarUnidad3 && (!graficoUnidadEspecifica || unidadSeleccionada == 3)) {
+                                            dibujarLinea(valores3, Color(0xFFFF5722), 3f)
+                                        }
+                                        // Unidad 2
+                                        if (mostrarUnidad2 && (!graficoUnidadEspecifica || unidadSeleccionada == 2)) {
+                                            dibujarLinea(valores2, Color(0xFF388E3C), 3f)
+                                        }
+                                        // Unidad 1
+                                        if (mostrarUnidad1 && (!graficoUnidadEspecifica || unidadSeleccionada == 1)) {
+                                            dibujarLinea(valores1, Color(0xFF7B1FA2), 3f)
+                                        }
 
-                                        // Dibujar puntos
-                                        if (mostrarUnidad3) dibujarPuntos(valores3, Color(0xFFFFA000))
-                                        if (mostrarUnidad2) dibujarPuntos(valores2, Color(0xFF388E3C))
-                                        if (mostrarUnidad1) dibujarPuntos(valores1, Color(0xFF7B1FA2))
+                                        // Puntos
+                                        if (mostrarUnidad3 && (!graficoUnidadEspecifica || unidadSeleccionada == 3)) {
+                                            dibujarPuntos(valores3, Color(0xFFFFA000))
+                                        }
+                                        if (mostrarUnidad2 && (!graficoUnidadEspecifica || unidadSeleccionada == 2)) {
+                                            dibujarPuntos(valores2, Color(0xFF388E3C))
+                                        }
+                                        if (mostrarUnidad1 && (!graficoUnidadEspecifica || unidadSeleccionada == 1)) {
+                                            dibujarPuntos(valores1, Color(0xFF7B1FA2))
+                                        }
                                     }
 
                                     // Etiquetas del eje X (horas)
@@ -915,7 +993,7 @@ fun PantallaCargaActiva() {
                             Column(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // Leyenda de colores interactiva
+                                // Leyenda
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -927,14 +1005,29 @@ fun PantallaCargaActiva() {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
-                                            .clickable { mostrarUnidad1 = !mostrarUnidad1 }
+                                            .then(
+                                                if (!graficoUnidadEspecifica) {
+                                                    Modifier.clickable {
+                                                        mostrarUnidad1 = !mostrarUnidad1
+                                                    }
+                                                } else {
+                                                    Modifier  // Sin click en modo unidad específica
+                                                }
+                                            )
                                             .padding(4.dp)
                                     ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    color = if (mostrarUnidad1) Color(0xFF7B1FA2) else Color(0xFFBDBDBD),
+                                                    color = when {
+                                                        graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(
+                                                            0xFFBDBDBD
+                                                        )
+
+                                                        !mostrarUnidad1 -> Color(0xFFBDBDBD)
+                                                        else -> Color(0xFF7B1FA2)
+                                                    },
                                                     shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
@@ -942,8 +1035,19 @@ fun PantallaCargaActiva() {
                                         Text(
                                             text = "Unidad 1",
                                             fontSize = 12.sp,
-                                            color = if (mostrarUnidad1) Color(0xFF757575) else Color(0xFFBDBDBD),
-                                            fontWeight = if (mostrarUnidad1) FontWeight.Medium else FontWeight.Normal
+                                            color = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(
+                                                    0xFFBDBDBD
+                                                )
+
+                                                !mostrarUnidad1 -> Color(0xFFBDBDBD)
+                                                else -> Color(0xFF757575)
+                                            },
+                                            fontWeight = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada == 1 -> FontWeight.Bold
+                                                mostrarUnidad1 && !graficoUnidadEspecifica -> FontWeight.Medium
+                                                else -> FontWeight.Normal
+                                            }
                                         )
                                     }
 
@@ -951,14 +1055,29 @@ fun PantallaCargaActiva() {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
-                                            .clickable { mostrarUnidad2 = !mostrarUnidad2 }
+                                            .then(
+                                                if (!graficoUnidadEspecifica) {
+                                                    Modifier.clickable {
+                                                        mostrarUnidad2 = !mostrarUnidad2
+                                                    }
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
                                             .padding(4.dp)
                                     ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    color = if (mostrarUnidad2) Color(0xFF388E3C) else Color(0xFFBDBDBD),
+                                                    color = when {
+                                                        graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(
+                                                            0xFFBDBDBD
+                                                        )
+
+                                                        !mostrarUnidad2 -> Color(0xFFBDBDBD)
+                                                        else -> Color(0xFF388E3C)
+                                                    },
                                                     shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
@@ -966,8 +1085,19 @@ fun PantallaCargaActiva() {
                                         Text(
                                             text = "Unidad 2",
                                             fontSize = 12.sp,
-                                            color = if (mostrarUnidad2) Color(0xFF757575) else Color(0xFFBDBDBD),
-                                            fontWeight = if (mostrarUnidad2) FontWeight.Medium else FontWeight.Normal
+                                            color = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(
+                                                    0xFFBDBDBD
+                                                )
+
+                                                !mostrarUnidad2 -> Color(0xFFBDBDBD)
+                                                else -> Color(0xFF757575)
+                                            },
+                                            fontWeight = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada == 2 -> FontWeight.Bold
+                                                mostrarUnidad2 && !graficoUnidadEspecifica -> FontWeight.Medium
+                                                else -> FontWeight.Normal
+                                            }
                                         )
                                     }
 
@@ -975,14 +1105,29 @@ fun PantallaCargaActiva() {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
-                                            .clickable { mostrarUnidad3 = !mostrarUnidad3 }
+                                            .then(
+                                                if (!graficoUnidadEspecifica) {
+                                                    Modifier.clickable {
+                                                        mostrarUnidad3 = !mostrarUnidad3
+                                                    }
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
                                             .padding(4.dp)
                                     ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .background(
-                                                    color = if (mostrarUnidad3) Color(0xFFFF5722) else Color(0xFFBDBDBD),
+                                                    color = when {
+                                                        graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(
+                                                            0xFFBDBDBD
+                                                        )
+
+                                                        !mostrarUnidad3 -> Color(0xFFBDBDBD)
+                                                        else -> Color(0xFFFF5722)
+                                                    },
                                                     shape = RoundedCornerShape(2.dp)
                                                 )
                                         )
@@ -990,8 +1135,19 @@ fun PantallaCargaActiva() {
                                         Text(
                                             text = "Unidad 3",
                                             fontSize = 12.sp,
-                                            color = if (mostrarUnidad3) Color(0xFF757575) else Color(0xFFBDBDBD),
-                                            fontWeight = if (mostrarUnidad3) FontWeight.Medium else FontWeight.Normal
+                                            color = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(
+                                                    0xFFBDBDBD
+                                                )
+
+                                                !mostrarUnidad3 -> Color(0xFFBDBDBD)
+                                                else -> Color(0xFF757575)
+                                            },
+                                            fontWeight = when {
+                                                graficoUnidadEspecifica && unidadSeleccionada == 3 -> FontWeight.Bold
+                                                mostrarUnidad3 && !graficoUnidadEspecifica -> FontWeight.Medium
+                                                else -> FontWeight.Normal
+                                            }
                                         )
                                     }
                                 }

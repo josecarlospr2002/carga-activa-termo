@@ -93,7 +93,7 @@ object ApiClient {
             Lectura(lec1 = 57.32, lec2 = 81.16, lec3 = 24.10, hora = "07:00 am"),
             Lectura(lec1 = 57.35, lec2 = 81.84, lec3 = 24.10, hora = "08:00 am"),
             Lectura(lec1 = 57.82, lec2 = 81.15, lec3 = 24.10, hora = "09:00 am"),
-            Lectura(lec1 = 57.74, lec2 = 80.13, lec3 = 24.10, hora = "10:00 am"),
+            Lectura(lec1 = 66.13, lec2 = 66.13, lec3 = 66.13, hora = "10:00 am"),
             Lectura(lec1 = 56.59, lec2 = 81.62, lec3 = 24.10, hora = "11:00 am"),
             Lectura(lec1 = null, lec2 = 81.15, lec3 = 24.10, hora = "12:00 pm"),
             Lectura(lec1 = null, lec2 = 75.07, lec3 = 24.10, hora = "01:00 pm"),
