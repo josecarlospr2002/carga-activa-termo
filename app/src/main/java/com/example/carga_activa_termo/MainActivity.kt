@@ -760,72 +760,80 @@ fun PantallaCargaActiva() {
                                                     }
 
                                                     if (mejorDist < 50f) {
-                                                        val hora = datos24h.getOrNull(indice)?.hora
-                                                            ?: "--:--"
+                                                        val hora = datos24h.getOrNull(indice)?.hora ?: "--:--"
 
                                                         if (!graficoUnidadEspecifica) {
-                                                            val v1 =
-                                                                if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
-                                                            val v2 =
-                                                                if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
-                                                            val v3 =
-                                                                if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
 
-                                                            val grupos =
-                                                                mutableMapOf<Int, MutableList<String>>()
-                                                            grupos.getOrPut(v1) { mutableListOf() }
-                                                                .add("Unidad 1")
-                                                            grupos.getOrPut(v2) { mutableListOf() }
-                                                                .add("Unidad 2")
-                                                            grupos.getOrPut(v3) { mutableListOf() }
-                                                                .add("Unidad 3")
+                                                            val v1 = if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
+                                                            val v2 = if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
+                                                            val v3 = if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
 
-                                                            val valorTocado = when (mejorUnidad) {
-                                                                "1" -> v1
-                                                                "2" -> v2
-                                                                else -> v3
+                                                            // Verificar que el toque está cerca de alguna unidad visible
+                                                            val hayUnidadVisibleCerca = when {
+                                                                mostrarUnidad1 && dist1 < 50f -> true
+                                                                mostrarUnidad2 && dist2 < 50f -> true
+                                                                mostrarUnidad3 && dist3 < 50f -> true
+                                                                else -> false
                                                             }
 
-                                                            val unidadesDelGrupo =
-                                                                grupos[valorTocado]
-                                                                    ?: listOf("Unidad $mejorUnidad")
+                                                            if (hayUnidadVisibleCerca) {
+                                                                // Encontrar la unidad visible
+                                                                var mejorUnidadVisible = "1"
+                                                                var mejorDistVisible = Float.MAX_VALUE
 
-                                                            snackbarMensaje =
-                                                                if (unidadesDelGrupo.size > 1) {
-                                                                    "${
-                                                                        unidadesDelGrupo.joinToString(
-                                                                            ", "
-                                                                        ) { "$it = $valorTocado" }
-                                                                    } a las $hora"
+                                                                if (mostrarUnidad1 && dist1 < mejorDistVisible) {
+                                                                    mejorDistVisible = dist1
+                                                                    mejorUnidadVisible = "1"
+                                                                }
+                                                                if (mostrarUnidad2 && dist2 < mejorDistVisible) {
+                                                                    mejorDistVisible = dist2
+                                                                    mejorUnidadVisible = "2"
+                                                                }
+                                                                if (mostrarUnidad3 && dist3 < mejorDistVisible) {
+                                                                    mejorDistVisible = dist3
+                                                                    mejorUnidadVisible = "3"
+                                                                }
+
+                                                                // Agrupar las unidades visibles por valor
+                                                                val grupos = mutableMapOf<Int, MutableList<String>>()
+                                                                if (mostrarUnidad1) grupos.getOrPut(v1) { mutableListOf() }.add("Unidad 1")
+                                                                if (mostrarUnidad2) grupos.getOrPut(v2) { mutableListOf() }.add("Unidad 2")
+                                                                if (mostrarUnidad3) grupos.getOrPut(v3) { mutableListOf() }.add("Unidad 3")
+
+                                                                val valorTocado = when (mejorUnidadVisible) {
+                                                                    "1" -> v1
+                                                                    "2" -> v2
+                                                                    else -> v3
+                                                                }
+
+                                                                val unidadesDelGrupo = grupos[valorTocado] ?: listOf("Unidad $mejorUnidadVisible")
+
+                                                                snackbarMensaje = if (unidadesDelGrupo.size > 1) {
+                                                                    "${unidadesDelGrupo.joinToString(", ") { "$it = $valorTocado" }} a las $hora"
                                                                 } else {
-                                                                    "Unidad $mejorUnidad = $valorTocado a las $hora"
-                                                                }
-                                                        } else {
-                                                            val valorSeleccionado =
-                                                                when (unidadSeleccionada) {
-                                                                    1 -> if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
-                                                                    2 -> if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
-                                                                    else -> if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
+                                                                    "${unidadesDelGrupo.first()} = $valorTocado a las $hora"
                                                                 }
 
-                                                            // Verificar que el toque está CERCA del punto de la unidad seleccionada
-                                                            val ySeleccionada =
-                                                                when (unidadSeleccionada) {
-                                                                    1 -> y1
-                                                                    2 -> y2
-                                                                    else -> y3
-                                                                }
-
-                                                            if (kotlin.math.abs(tapOffset.y - ySeleccionada) < 50f) {
-                                                                snackbarMensaje =
-                                                                    "Unidad $unidadSeleccionada = $valorSeleccionado a las $hora"
                                                                 snackbarVisible = true
                                                             }
-                                                        }
+                                                        } else {
 
-                                                        // Modo normal, siempre mostrar
-                                                        if (!graficoUnidadEspecifica) {
-                                                            snackbarVisible = true
+                                                            val valorSeleccionado = when (unidadSeleccionada) {
+                                                                1 -> if (valoresUnidad1[indice] <= 0) 0 else valoresUnidad1[indice].roundToInt()
+                                                                2 -> if (valoresUnidad2[indice] <= 0) 0 else valoresUnidad2[indice].roundToInt()
+                                                                else -> if (valoresUnidad3[indice] <= 0) 0 else valoresUnidad3[indice].roundToInt()
+                                                            }
+
+                                                            val ySeleccionada = when (unidadSeleccionada) {
+                                                                1 -> y1
+                                                                2 -> y2
+                                                                else -> y3
+                                                            }
+
+                                                            if (kotlin.math.abs(tapOffset.y - ySeleccionada) < 50f) {
+                                                                snackbarMensaje = "Unidad $unidadSeleccionada = $valorSeleccionado a las $hora"
+                                                                snackbarVisible = true
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -858,15 +866,30 @@ fun PantallaCargaActiva() {
                                             if (valores.isEmpty() || cantidadPuntos < 2) return
 
                                             val path = Path()
-                                            valores.forEachIndexed { index, valor ->
-                                                val x =
-                                                    (index.toFloat() / (cantidadPuntos - 1)) * ancho
-                                                val proporcion =
-                                                    ((valor - minValor) / rango).toFloat()
-                                                val y = alto - (proporcion * alto)
 
-                                                if (index == 0) path.moveTo(x, y)
-                                                else path.lineTo(x, y)
+                                            for (i in 0 until cantidadPuntos - 1) {
+                                                val x1 =
+                                                    (i.toFloat() / (cantidadPuntos - 1)) * ancho
+                                                val proporcion1 =
+                                                    ((valores[i] - minValor) / rango).toFloat()
+                                                val y1 = alto - (proporcion1 * alto)
+
+                                                val x2 =
+                                                    ((i + 1).toFloat() / (cantidadPuntos - 1)) * ancho
+                                                val proporcion2 =
+                                                    ((valores[i + 1] - minValor) / rango).toFloat()
+                                                val y2 = alto - (proporcion2 * alto)
+
+                                                if (i == 0) {
+                                                    path.moveTo(x1, y1)
+                                                }
+
+                                                val cx1 = x1 + (x2 - x1) / 3
+                                                val cy1 = y1
+                                                val cx2 = x2 - (x2 - x1) / 3
+                                                val cy2 = y2
+
+                                                path.cubicTo(cx1, cy1, cx2, cy2, x2, y2)
                                             }
 
                                             drawPath(
