@@ -30,7 +30,6 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -153,7 +152,7 @@ fun PantallaCargaActiva() {
                 .then(if (modalAbierto) Modifier.blur(24.dp) else Modifier),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Row(
                 modifier = Modifier
@@ -198,6 +197,8 @@ fun PantallaCargaActiva() {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(30.dp))
 
             if (mensajeError != null) {
                 Card(
@@ -280,7 +281,7 @@ fun PantallaCargaActiva() {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     TarjetaUnidad(
                         numeroUnidad = 2,
@@ -291,7 +292,7 @@ fun PantallaCargaActiva() {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     TarjetaUnidad(
                         numeroUnidad = 3,
@@ -316,7 +317,7 @@ fun PantallaCargaActiva() {
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
 
                         Button(
                             onClick = {

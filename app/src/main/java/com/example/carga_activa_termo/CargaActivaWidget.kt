@@ -56,13 +56,15 @@ class CargaActivaWidget : AppWidgetProvider() {
     }
 
     private fun configurarClicks(context: Context, views: RemoteViews, widgetId: Int) {
+        // Zona superior → Abre la app
         val intentApp = Intent(context, MainActivity::class.java)
         val pendingIntentApp = PendingIntent.getActivity(
             context, widgetId, intentApp,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.widget_root, pendingIntentApp)
+        views.setOnClickPendingIntent(R.id.zona_abrir_app, pendingIntentApp)
 
+        // Zona inferior completa → Actualizar widget
         val intentActualizar = Intent(context, CargaActivaWidget::class.java).apply {
             action = "ACTUALIZAR_WIDGET"
         }
@@ -70,6 +72,6 @@ class CargaActivaWidget : AppWidgetProvider() {
             context, widgetId, intentActualizar,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.btn_actualizar, pendingIntentActualizar)
+        views.setOnClickPendingIntent(R.id.btn_actualizar_zona, pendingIntentActualizar)
     }
 }
