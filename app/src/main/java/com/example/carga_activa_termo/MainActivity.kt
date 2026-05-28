@@ -610,7 +610,10 @@ fun PantallaCargaActiva() {
                             .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 4.dp)
                     ) {
                         Text(
-                            text = "Comportamiento de las Unidades en las Últimas 24 Horas",
+                            text = if (graficoUnidadEspecifica)
+                                "Comportamiento de la Unidad $unidadSeleccionada en las Últimas 24 Horas"
+                            else
+                                "Comportamiento de las Unidades en las Últimas 24 Horas",
                             fontSize = 21.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0D47A1),
