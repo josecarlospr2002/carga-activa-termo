@@ -1,4 +1,4 @@
-package com.example.carga_activa_termo
+package com.example.carga_activa_termo.data
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol

@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.IBinder
 import android.view.View
 import android.widget.RemoteViews
+import com.example.carga_activa_termo.data.ApiClient
+import com.example.carga_activa_termo.data.Lectura
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

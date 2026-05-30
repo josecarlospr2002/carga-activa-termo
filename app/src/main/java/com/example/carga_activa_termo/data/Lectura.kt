@@ -1,4 +1,4 @@
-package com.example.carga_activa_termo
+package com.example.carga_activa_termo.data
 
 data class Lectura(
     val lec1: Double?,
