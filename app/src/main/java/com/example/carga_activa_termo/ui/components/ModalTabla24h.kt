@@ -26,7 +26,8 @@ fun ModalTabla24h(
     onCerrar: () -> Unit,
     datos24h: List<Lectura>,
     cargando: Boolean,
-    unidadEspecifica: Int? = null
+    unidadEspecifica: Int? = null,
+    onAtras: (() -> Unit)? = null
 ) {
     var ordenInvertido by remember { mutableStateOf(false) }
 
@@ -56,7 +57,7 @@ fun ModalTabla24h(
                 // Título
                 Text(
                     text = if (unidadEspecifica != null)
-                        "Marcajes Unidad $unidadEspecifica - Últimas 24 Horas"
+                        "Marcaje de la Unidad $unidadEspecifica en las Últimas 24 Horas"
                     else
                         "Marcajes Últimas 24 Horas",
                     fontSize = 21.sp,
@@ -377,20 +378,46 @@ fun ModalTabla24h(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
-                    onClick = { onCerrar() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(45.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
+                // Fila de botones Atrás y Cerrar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Cerrar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    // Botón Atrás
+                    if (onAtras != null) {
+                        Button(
+                            onClick = { onAtras() },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(45.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                        ) {
+                            Text(
+                                text = "Atrás",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    // Botón Cerrar
+                    Button(
+                        onClick = { onCerrar() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(45.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
+                    ) {
+                        Text(
+                            text = "Cerrar",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

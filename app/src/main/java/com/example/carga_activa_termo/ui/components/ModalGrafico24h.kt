@@ -37,7 +37,8 @@ fun ModalGrafico24h(
     onMostrarUnidad2Change: (Boolean) -> Unit,
     onMostrarUnidad3Change: (Boolean) -> Unit,
     onSnackbarMensajeChange: (String?) -> Unit,
-    onSnackbarVisibleChange: (Boolean) -> Unit
+    onSnackbarVisibleChange: (Boolean) -> Unit,
+    onAtras: (() -> Unit)? = null
 ) {
     Dialog(
         onDismissRequest = { onCerrar() },
@@ -200,7 +201,10 @@ fun ModalGrafico24h(
                                     .size(12.dp)
                                     .background(
                                         color = when {
-                                            graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(0xFFBDBDBD)
+                                            graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(
+                                                0xFFBDBDBD
+                                            )
+
                                             !mostrarUnidad1 -> Color(0xFFBDBDBD)
                                             else -> Color(0xFF7B1FA2)
                                         },
@@ -212,7 +216,10 @@ fun ModalGrafico24h(
                                 text = "Unidad 1",
                                 fontSize = 12.sp,
                                 color = when {
-                                    graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(0xFFBDBDBD)
+                                    graficoUnidadEspecifica && unidadSeleccionada != 1 -> Color(
+                                        0xFFBDBDBD
+                                    )
+
                                     !mostrarUnidad1 -> Color(0xFFBDBDBD)
                                     else -> Color(0xFF757575)
                                 },
@@ -244,7 +251,10 @@ fun ModalGrafico24h(
                                     .size(12.dp)
                                     .background(
                                         color = when {
-                                            graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(0xFFBDBDBD)
+                                            graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(
+                                                0xFFBDBDBD
+                                            )
+
                                             !mostrarUnidad2 -> Color(0xFFBDBDBD)
                                             else -> Color(0xFF388E3C)
                                         },
@@ -256,7 +266,10 @@ fun ModalGrafico24h(
                                 text = "Unidad 2",
                                 fontSize = 12.sp,
                                 color = when {
-                                    graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(0xFFBDBDBD)
+                                    graficoUnidadEspecifica && unidadSeleccionada != 2 -> Color(
+                                        0xFFBDBDBD
+                                    )
+
                                     !mostrarUnidad2 -> Color(0xFFBDBDBD)
                                     else -> Color(0xFF757575)
                                 },
@@ -288,7 +301,10 @@ fun ModalGrafico24h(
                                     .size(12.dp)
                                     .background(
                                         color = when {
-                                            graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(0xFFBDBDBD)
+                                            graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(
+                                                0xFFBDBDBD
+                                            )
+
                                             !mostrarUnidad3 -> Color(0xFFBDBDBD)
                                             else -> Color(0xFFFF5722)
                                         },
@@ -300,7 +316,10 @@ fun ModalGrafico24h(
                                 text = "Unidad 3",
                                 fontSize = 12.sp,
                                 color = when {
-                                    graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(0xFFBDBDBD)
+                                    graficoUnidadEspecifica && unidadSeleccionada != 3 -> Color(
+                                        0xFFBDBDBD
+                                    )
+
                                     !mostrarUnidad3 -> Color(0xFFBDBDBD)
                                     else -> Color(0xFF757575)
                                 },
@@ -315,22 +334,47 @@ fun ModalGrafico24h(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    Button(
-                        onClick = { onCerrar() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(45.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF0D47A1)
-                        )
+                    // Fila de botones Atrás y Cerrar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "Cerrar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        if (onAtras != null) {
+                            Button(
+                                onClick = { onAtras() },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(45.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFF1565C0
+                                    )
+                                )
+                            ) {
+                                Text(
+                                    text = "Atrás",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = { onCerrar() },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(45.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
+                        ) {
+                            Text(
+                                text = "Cerrar",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))

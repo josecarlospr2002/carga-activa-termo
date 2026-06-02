@@ -93,7 +93,8 @@ fun PantallaCargaActiva() {
                 .then(if (modalAbierto) Modifier.blur(24.dp) else Modifier),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(14.dp))
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             Row(
                 modifier = Modifier
@@ -139,7 +140,7 @@ fun PantallaCargaActiva() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             if (mensajeError != null) {
                 Card(
@@ -156,10 +157,7 @@ fun PantallaCargaActiva() {
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "⚠️",
-                            fontSize = 40.sp
-                        )
+                        Text(text = "⚠️", fontSize = 40.sp)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = mensajeError!!,
@@ -212,17 +210,17 @@ fun PantallaCargaActiva() {
                         numeroUnidad = 1,
                         valor = ultimaLectura.lec1,
                         onClick = { unidadSeleccionada = 1; modalAbierto = true })
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     TarjetaUnidad(
                         numeroUnidad = 2,
                         valor = ultimaLectura.lec2,
                         onClick = { unidadSeleccionada = 2; modalAbierto = true })
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     TarjetaUnidad(
                         numeroUnidad = 3,
                         valor = ultimaLectura.lec3,
                         onClick = { unidadSeleccionada = 3; modalAbierto = true })
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -235,7 +233,7 @@ fun PantallaCargaActiva() {
                             color = Color.White,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
                             onClick = {
@@ -377,7 +375,10 @@ fun PantallaCargaActiva() {
                 onMostrarUnidad2Change = { mostrarUnidad2 = it },
                 onMostrarUnidad3Change = { mostrarUnidad3 = it },
                 onSnackbarMensajeChange = { snackbarMensaje = it },
-                onSnackbarVisibleChange = { snackbarVisible = it }
+                onSnackbarVisibleChange = { snackbarVisible = it },
+                onAtras = if (graficoUnidadEspecifica) {
+                    { modalGraficoAbierto = false; modalAbierto = true }
+                } else null
             )
         }
 
@@ -387,7 +388,10 @@ fun PantallaCargaActiva() {
                 onCerrar = { modalTablaAbierto = false },
                 datos24h = datos24h,
                 cargando = cargandoTabla,
-                unidadEspecifica = tablaUnidadEspecifica
+                unidadEspecifica = tablaUnidadEspecifica,
+                onAtras = if (tablaUnidadEspecifica != null) {
+                    { modalTablaAbierto = false; modalAbierto = true }
+                } else null
             )
         }
     }
