@@ -52,6 +52,7 @@ fun ModalTabla24h(
                     .fillMaxSize()
                     .padding(8.dp)
             ) {
+                // Título
                 Text(
                     text = "Marcajes Últimas 24 Horas",
                     fontSize = 21.sp,
@@ -117,13 +118,19 @@ fun ModalTabla24h(
 
                     // Calcular valores redondeados para cada unidad
                     val valoresRedondeadosU1 = datos24h.mapNotNull {
-                        if (it.lec1 == null || it.lec1 < 0) null else it.lec1.roundToInt()
+                        if (it.lec1 == null) null
+                        else if (it.lec1 <= 0) 0
+                        else it.lec1.roundToInt()
                     }
                     val valoresRedondeadosU2 = datos24h.mapNotNull {
-                        if (it.lec2 == null || it.lec2 < 0) null else it.lec2.roundToInt()
+                        if (it.lec2 == null) null
+                        else if (it.lec2 <= 0) 0
+                        else it.lec2.roundToInt()
                     }
                     val valoresRedondeadosU3 = datos24h.mapNotNull {
-                        if (it.lec3 == null || it.lec3 < 0) null else it.lec3.roundToInt()
+                        if (it.lec3 == null) null
+                        else if (it.lec3 <= 0) 0
+                        else it.lec3.roundToInt()
                     }
 
                     // Calcular máximos y mínimos con valores redondeados
@@ -139,11 +146,66 @@ fun ModalTabla24h(
                     val esConstanteU2 = maxU2 != null && minU2 != null && maxU2 == minU2
                     val esConstanteU3 = maxU3 != null && minU3 != null && maxU3 == minU3
 
+                    // Calcular promedios redondeados
+                    val promedioU1 = if (valoresRedondeadosU1.isNotEmpty()) {
+                        valoresRedondeadosU1.average().roundToInt()
+                    } else null
+                    val promedioU2 = if (valoresRedondeadosU2.isNotEmpty()) {
+                        valoresRedondeadosU2.average().roundToInt()
+                    } else null
+                    val promedioU3 = if (valoresRedondeadosU3.isNotEmpty()) {
+                        valoresRedondeadosU3.average().roundToInt()
+                    } else null
+
+                    // Fila de promedio
+                    @Composable
+                    fun FilaPromedio() {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFEDE7F6))
+                                .padding(vertical = 12.dp)
+                        ) {
+                            Text(
+                                text = "Prom",
+                                modifier = Modifier.weight(1f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7B1FA2),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = if (promedioU1 != null) promedioU1.toString() else "-",
+                                modifier = Modifier.weight(1f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7B1FA2),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = if (promedioU2 != null) promedioU2.toString() else "-",
+                                modifier = Modifier.weight(1f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7B1FA2),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = if (promedioU3 != null) promedioU3.toString() else "-",
+                                modifier = Modifier.weight(1f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7B1FA2),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
                     // Tabla
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
-                        // Encabezado clickeable
+                        // Encabezado (clickeable)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -192,6 +254,14 @@ fun ModalTabla24h(
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            // Si está invertido, mostrar promedio de primero
+                            if (ordenInvertido) {
+                                item {
+                                    FilaPromedio()
+                                }
+                            }
+
+                            // Filas de datos normales
                             items(datosMostrar) { lectura ->
                                 val colorFondo = if (datosMostrar.indexOf(lectura) % 2 == 0) {
                                     Color(0xFFF5F5F5)
@@ -253,6 +323,13 @@ fun ModalTabla24h(
                                     )
                                 }
                             }
+
+                            // Si no está invertido, mostrar promedio al fnal
+                            if (!ordenInvertido) {
+                                item {
+                                    FilaPromedio()
+                                }
+                            }
                         }
                     }
                 }
@@ -263,48 +340,69 @@ fun ModalTabla24h(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                        .padding(horizontal = 4.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Valor más Alto
+                    // V. más Alto
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(14.dp)
+                                .size(12.dp)
                                 .background(
                                     color = Color(0xFF1565C0),
                                     shape = RoundedCornerShape(2.dp)
                                 )
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Valor más Alto",
-                            fontSize = 13.sp,
+                            text = "V. más Alto",
+                            fontSize = 12.sp,
                             color = Color(0xFF757575)
                         )
                     }
 
-                    // Valor más Bajo
+                    // V. más Bajo
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(14.dp)
+                                .size(12.dp)
                                 .background(
                                     color = Color(0xFFC62828),
                                     shape = RoundedCornerShape(2.dp)
                                 )
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Valor más Bajo",
-                            fontSize = 13.sp,
+                            text = "V. más Bajo",
+                            fontSize = 12.sp,
+                            color = Color(0xFF757575)
+                        )
+                    }
+
+                    // Promedio
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = Color(0xFF7B1FA2),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Promedio",
+                            fontSize = 12.sp,
                             color = Color(0xFF757575)
                         )
                     }
@@ -351,24 +449,17 @@ fun obtenerColorValorRedondeado(
     minRedondeado: Int?,
     esConstante: Boolean
 ): Color {
-    // Si es null, color normal
-    if (valor == null) return Color(0xFF424242)
+    if (valor == null) return Color(0xFF424242)    // Si es null, color normal
 
-    // Si no hay máximos/mínimos, color normal
-    if (maxRedondeado == null || minRedondeado == null) return Color(0xFF424242)
+    if (maxRedondeado == null || minRedondeado == null) return Color(0xFF424242)    // Si no hay máximos/mínimos, color normal
 
-    // Si es constante (todos iguales), color normal
-    if (esConstante) return Color(0xFF424242)
+    if (esConstante) return Color(0xFF424242)    // Si es constante (todos iguales), color normal
 
-    // Obtener el valor redondeado (si es negativo, se convierte a 0)
-    val valorRedondeado = if (valor <= 0) 0 else valor.roundToInt()
+    val valorRedondeado = if (valor <= 0) 0 else valor.roundToInt()    // Obtener el valor redondeado (si es negativo, se convierte a 0)
 
-    // Si el valor redondeado es igual al máximo redondeado, azul
-    if (valorRedondeado == maxRedondeado) return Color(0xFF1565C0)
+    if (valorRedondeado == maxRedondeado) return Color(0xFF1565C0)    // Si el valor redondeado es igual al máximo redondeado, azul
 
-    // Si el valor redondeado es igual al mínimo redondeado, rojo
-    if (valorRedondeado == minRedondeado) return Color(0xFFC62828)
+    if (valorRedondeado == minRedondeado) return Color(0xFFC62828)    // Si el valor redondeado es igual al mínimo redondeado, rojo
 
-    // Valor intermedio, color normal
-    return Color(0xFF424242)
+    return Color(0xFF424242)    // Valor intermedio, color normal
 }
