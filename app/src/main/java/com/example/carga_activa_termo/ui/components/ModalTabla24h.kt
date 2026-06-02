@@ -25,7 +25,8 @@ import kotlin.math.roundToInt
 fun ModalTabla24h(
     onCerrar: () -> Unit,
     datos24h: List<Lectura>,
-    cargando: Boolean
+    cargando: Boolean,
+    unidadEspecifica: Int? = null
 ) {
     var ordenInvertido by remember { mutableStateOf(false) }
 
@@ -54,7 +55,10 @@ fun ModalTabla24h(
             ) {
                 // Título
                 Text(
-                    text = "Marcajes Últimas 24 Horas",
+                    text = if (unidadEspecifica != null)
+                        "Marcajes Unidad $unidadEspecifica - Últimas 24 Horas"
+                    else
+                        "Marcajes Últimas 24 Horas",
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0D47A1),
@@ -109,53 +113,40 @@ fun ModalTabla24h(
                         )
                     }
                 } else {
-                    // Preparar datos según orden
-                    val datosMostrar = if (ordenInvertido) {
-                        datos24h
-                    } else {
-                        datos24h.reversed()
+                    val datosMostrar = if (ordenInvertido) datos24h else datos24h.reversed()
+
+                    // Función para obtener valores redondeados de una unidad
+                    fun valoresRedondeados(unidad: Int): List<Int> {
+                        return datos24h.mapNotNull {
+                            val valor = when (unidad) {
+                                1 -> it.lec1; 2 -> it.lec2; else -> it.lec3
+                            }
+                            if (valor == null) null else if (valor <= 0) 0 else valor.roundToInt()
+                        }
                     }
 
-                    // Calcular valores redondeados para cada unidad
-                    val valoresRedondeadosU1 = datos24h.mapNotNull {
-                        if (it.lec1 == null) null
-                        else if (it.lec1 <= 0) 0
-                        else it.lec1.roundToInt()
-                    }
-                    val valoresRedondeadosU2 = datos24h.mapNotNull {
-                        if (it.lec2 == null) null
-                        else if (it.lec2 <= 0) 0
-                        else it.lec2.roundToInt()
-                    }
-                    val valoresRedondeadosU3 = datos24h.mapNotNull {
-                        if (it.lec3 == null) null
-                        else if (it.lec3 <= 0) 0
-                        else it.lec3.roundToInt()
-                    }
+                    // Calcular para unidad específica o todas
+                    val vrU1 =
+                        if (unidadEspecifica == null || unidadEspecifica == 1) valoresRedondeados(1) else emptyList()
+                    val vrU2 =
+                        if (unidadEspecifica == null || unidadEspecifica == 2) valoresRedondeados(2) else emptyList()
+                    val vrU3 =
+                        if (unidadEspecifica == null || unidadEspecifica == 3) valoresRedondeados(3) else emptyList()
 
-                    // Calcular máximos y mínimos con valores redondeados
-                    val maxU1 = if (valoresRedondeadosU1.isNotEmpty()) valoresRedondeadosU1.max() else null
-                    val minU1 = if (valoresRedondeadosU1.isNotEmpty()) valoresRedondeadosU1.min() else null
-                    val maxU2 = if (valoresRedondeadosU2.isNotEmpty()) valoresRedondeadosU2.max() else null
-                    val minU2 = if (valoresRedondeadosU2.isNotEmpty()) valoresRedondeadosU2.min() else null
-                    val maxU3 = if (valoresRedondeadosU3.isNotEmpty()) valoresRedondeadosU3.max() else null
-                    val minU3 = if (valoresRedondeadosU3.isNotEmpty()) valoresRedondeadosU3.min() else null
+                    val maxU1 = if (vrU1.isNotEmpty()) vrU1.max() else null
+                    val minU1 = if (vrU1.isNotEmpty()) vrU1.min() else null
+                    val maxU2 = if (vrU2.isNotEmpty()) vrU2.max() else null
+                    val minU2 = if (vrU2.isNotEmpty()) vrU2.min() else null
+                    val maxU3 = if (vrU3.isNotEmpty()) vrU3.max() else null
+                    val minU3 = if (vrU3.isNotEmpty()) vrU3.min() else null
 
-                    // Verificar si son todos iguales (constante) con valores redondeados
                     val esConstanteU1 = maxU1 != null && minU1 != null && maxU1 == minU1
                     val esConstanteU2 = maxU2 != null && minU2 != null && maxU2 == minU2
                     val esConstanteU3 = maxU3 != null && minU3 != null && maxU3 == minU3
 
-                    // Calcular promedios redondeados
-                    val promedioU1 = if (valoresRedondeadosU1.isNotEmpty()) {
-                        valoresRedondeadosU1.average().roundToInt()
-                    } else null
-                    val promedioU2 = if (valoresRedondeadosU2.isNotEmpty()) {
-                        valoresRedondeadosU2.average().roundToInt()
-                    } else null
-                    val promedioU3 = if (valoresRedondeadosU3.isNotEmpty()) {
-                        valoresRedondeadosU3.average().roundToInt()
-                    } else null
+                    val promU1 = if (vrU1.isNotEmpty()) vrU1.average().roundToInt() else null
+                    val promU2 = if (vrU2.isNotEmpty()) vrU2.average().roundToInt() else null
+                    val promU3 = if (vrU3.isNotEmpty()) vrU3.average().roundToInt() else null
 
                     // Fila de promedio
                     @Composable
@@ -174,38 +165,41 @@ fun ModalTabla24h(
                                 color = Color(0xFF7B1FA2),
                                 textAlign = TextAlign.Center
                             )
-                            Text(
-                                text = if (promedioU1 != null) promedioU1.toString() else "-",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF7B1FA2),
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = if (promedioU2 != null) promedioU2.toString() else "-",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF7B1FA2),
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = if (promedioU3 != null) promedioU3.toString() else "-",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF7B1FA2),
-                                textAlign = TextAlign.Center
-                            )
+                            if (unidadEspecifica == null || unidadEspecifica == 1) {
+                                Text(
+                                    text = if (promU1 != null) promU1.toString() else "-",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7B1FA2),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            if (unidadEspecifica == null || unidadEspecifica == 2) {
+                                Text(
+                                    text = if (promU2 != null) promU2.toString() else "-",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7B1FA2),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            if (unidadEspecifica == null || unidadEspecifica == 3) {
+                                Text(
+                                    text = if (promU3 != null) promU3.toString() else "-",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7B1FA2),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
 
-                    // Tabla
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        // Encabezado (clickeable)
+                    Column(modifier = Modifier.weight(1f)) {
+                        // Encabezado
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -224,50 +218,42 @@ fun ModalTabla24h(
                                 color = Color.White,
                                 textAlign = TextAlign.Center
                             )
-                            Text(
-                                text = "U1",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "U2",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "U3",
-                                modifier = Modifier.weight(1f),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
+                            if (unidadEspecifica == null || unidadEspecifica == 1)
+                                Text(
+                                    text = "U1",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            if (unidadEspecifica == null || unidadEspecifica == 2)
+                                Text(
+                                    text = "U2",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                            if (unidadEspecifica == null || unidadEspecifica == 3)
+                                Text(
+                                    text = "U3",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
                         }
 
-                        // Filas de datos
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // Si está invertido, mostrar promedio de primero
-                            if (ordenInvertido) {
-                                item {
-                                    FilaPromedio()
-                                }
-                            }
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            if (ordenInvertido) item { FilaPromedio() }
 
-                            // Filas de datos normales
                             items(datosMostrar) { lectura ->
-                                val colorFondo = if (datosMostrar.indexOf(lectura) % 2 == 0) {
-                                    Color(0xFFF5F5F5)
-                                } else {
-                                    Color.White
-                                }
+                                val idx = datosMostrar.indexOf(lectura)
+                                val colorFondo =
+                                    if (idx % 2 == 0) Color(0xFFF5F5F5) else Color.White
 
                                 Row(
                                     modifier = Modifier
@@ -282,54 +268,52 @@ fun ModalTabla24h(
                                         color = Color(0xFF424242),
                                         textAlign = TextAlign.Center
                                     )
-                                    Text(
-                                        text = formatearValor(lectura.lec1),
-                                        modifier = Modifier.weight(1f),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = obtenerColorValorRedondeado(
-                                            valor = lectura.lec1,
-                                            maxRedondeado = maxU1,
-                                            minRedondeado = minU1,
-                                            esConstante = esConstanteU1
-                                        ),
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(
-                                        text = formatearValor(lectura.lec2),
-                                        modifier = Modifier.weight(1f),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = obtenerColorValorRedondeado(
-                                            valor = lectura.lec2,
-                                            maxRedondeado = maxU2,
-                                            minRedondeado = minU2,
-                                            esConstante = esConstanteU2
-                                        ),
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(
-                                        text = formatearValor(lectura.lec3),
-                                        modifier = Modifier.weight(1f),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = obtenerColorValorRedondeado(
-                                            valor = lectura.lec3,
-                                            maxRedondeado = maxU3,
-                                            minRedondeado = minU3,
-                                            esConstante = esConstanteU3
-                                        ),
-                                        textAlign = TextAlign.Center
-                                    )
+                                    if (unidadEspecifica == null || unidadEspecifica == 1)
+                                        Text(
+                                            text = formatearValor(lectura.lec1),
+                                            modifier = Modifier.weight(1f),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = obtenerColorValorRedondeado(
+                                                lectura.lec1,
+                                                maxU1,
+                                                minU1,
+                                                esConstanteU1
+                                            ),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    if (unidadEspecifica == null || unidadEspecifica == 2)
+                                        Text(
+                                            text = formatearValor(lectura.lec2),
+                                            modifier = Modifier.weight(1f),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = obtenerColorValorRedondeado(
+                                                lectura.lec2,
+                                                maxU2,
+                                                minU2,
+                                                esConstanteU2
+                                            ),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    if (unidadEspecifica == null || unidadEspecifica == 3)
+                                        Text(
+                                            text = formatearValor(lectura.lec3),
+                                            modifier = Modifier.weight(1f),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = obtenerColorValorRedondeado(
+                                                lectura.lec3,
+                                                maxU3,
+                                                minU3,
+                                                esConstanteU3
+                                            ),
+                                            textAlign = TextAlign.Center
+                                        )
                                 }
                             }
 
-                            // Si no está invertido, mostrar promedio al fnal
-                            if (!ordenInvertido) {
-                                item {
-                                    FilaPromedio()
-                                }
-                            }
+                            if (!ordenInvertido) item { FilaPromedio() }
                         }
                     }
                 }
@@ -344,7 +328,6 @@ fun ModalTabla24h(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // V. más Alto
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 6.dp)
@@ -358,14 +341,8 @@ fun ModalTabla24h(
                                 )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "V. más Alto",
-                            fontSize = 12.sp,
-                            color = Color(0xFF757575)
-                        )
+                        Text(text = "V. más Alto", fontSize = 12.sp, color = Color(0xFF757575))
                     }
-
-                    // V. más Bajo
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 6.dp)
@@ -379,14 +356,8 @@ fun ModalTabla24h(
                                 )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "V. más Bajo",
-                            fontSize = 12.sp,
-                            color = Color(0xFF757575)
-                        )
+                        Text(text = "V. más Bajo", fontSize = 12.sp, color = Color(0xFF757575))
                     }
-
-                    // Promedio
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 6.dp)
@@ -400,26 +371,19 @@ fun ModalTabla24h(
                                 )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Promedio",
-                            fontSize = 12.sp,
-                            color = Color(0xFF757575)
-                        )
+                        Text(text = "Promedio", fontSize = 12.sp, color = Color(0xFF757575))
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Botón Cerrar
                 Button(
                     onClick = { onCerrar() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(45.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0D47A1)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
                 ) {
                     Text(
                         text = "Cerrar",
@@ -433,12 +397,9 @@ fun ModalTabla24h(
     }
 }
 
-// Función auxiliar para formatear valores
 fun formatearValor(valor: Double?): String {
     return when {
-        valor == null -> "-"
-        valor <= 0 -> "0"
-        else -> valor.roundToInt().toString()
+        valor == null -> "-"; valor <= 0 -> "0"; else -> valor.roundToInt().toString()
     }
 }
 
@@ -455,7 +416,8 @@ fun obtenerColorValorRedondeado(
 
     if (esConstante) return Color(0xFF424242)    // Si es constante (todos iguales), color normal
 
-    val valorRedondeado = if (valor <= 0) 0 else valor.roundToInt()    // Obtener el valor redondeado (si es negativo, se convierte a 0)
+    val valorRedondeado =
+        if (valor <= 0) 0 else valor.roundToInt()    // Obtener el valor redondeado (si es negativo, se convierte a 0)
 
     if (valorRedondeado == maxRedondeado) return Color(0xFF1565C0)    // Si el valor redondeado es igual al máximo redondeado, azul
 

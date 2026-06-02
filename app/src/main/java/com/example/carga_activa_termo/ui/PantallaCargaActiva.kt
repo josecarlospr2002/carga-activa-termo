@@ -48,6 +48,7 @@ fun PantallaCargaActiva() {
     var graficoUnidadEspecifica by remember { mutableStateOf(false) }
     var modalTablaAbierto by remember { mutableStateOf(false) }
     var cargandoTabla by remember { mutableStateOf(false) }
+    var tablaUnidadEspecifica by remember { mutableStateOf<Int?>(null) }
 
     fun cargarDatos() {
         coroutineScope.launch {
@@ -159,9 +160,7 @@ fun PantallaCargaActiva() {
                             text = "⚠️",
                             fontSize = 40.sp
                         )
-
                         Spacer(modifier = Modifier.height(12.dp))
-
                         Text(
                             text = mensajeError!!,
                             fontSize = 16.sp,
@@ -171,9 +170,7 @@ fun PantallaCargaActiva() {
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
-
                 Button(
                     onClick = { cargarDatos() },
                     modifier = Modifier
@@ -210,39 +207,21 @@ fun PantallaCargaActiva() {
                 }
             } else {
                 val ultimaLectura = lecturas.lastOrNull()
-
                 if (ultimaLectura != null) {
                     TarjetaUnidad(
                         numeroUnidad = 1,
                         valor = ultimaLectura.lec1,
-                        onClick = {
-                            unidadSeleccionada = 1
-                            modalAbierto = true
-                        }
-                    )
-
+                        onClick = { unidadSeleccionada = 1; modalAbierto = true })
                     Spacer(modifier = Modifier.height(20.dp))
-
                     TarjetaUnidad(
                         numeroUnidad = 2,
                         valor = ultimaLectura.lec2,
-                        onClick = {
-                            unidadSeleccionada = 2
-                            modalAbierto = true
-                        }
-                    )
-
+                        onClick = { unidadSeleccionada = 2; modalAbierto = true })
                     Spacer(modifier = Modifier.height(20.dp))
-
                     TarjetaUnidad(
                         numeroUnidad = 3,
                         valor = ultimaLectura.lec3,
-                        onClick = {
-                            unidadSeleccionada = 3
-                            modalAbierto = true
-                        }
-                    )
-
+                        onClick = { unidadSeleccionada = 3; modalAbierto = true })
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Column(
@@ -256,25 +235,17 @@ fun PantallaCargaActiva() {
                             color = Color.White,
                             textAlign = TextAlign.Center
                         )
-
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Botón Gráfico 24 Horas
                         Button(
                             onClick = {
-                                mostrarUnidad1 = true
-                                mostrarUnidad2 = true
-                                mostrarUnidad3 = true
-                                graficoUnidadEspecifica = false
-                                cargandoGrafico = true
-                                modalGraficoAbierto = true
+                                mostrarUnidad1 = true; mostrarUnidad2 = true; mostrarUnidad3 = true
+                                graficoUnidadEspecifica = false; cargandoGrafico =
+                                true; modalGraficoAbierto = true
                                 coroutineScope.launch {
                                     try {
-                                        datos24h = if (esModoMock) {
-                                            ApiClient.getMockData24h()
-                                        } else {
-                                            ApiClient.apiService.getCargaActiva24h()
-                                        }
+                                        datos24h =
+                                            if (esModoMock) ApiClient.getMockData24h() else ApiClient.apiService.getCargaActiva24h()
                                     } catch (e: Exception) {
                                         datos24h = emptyList()
                                     } finally {
@@ -286,9 +257,7 @@ fun PantallaCargaActiva() {
                                 .fillMaxWidth()
                                 .height(60.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF42A5F5)
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF42A5F5))
                         ) {
                             Text(
                                 text = "Gráfico Últimas 24 Horas",
@@ -300,18 +269,14 @@ fun PantallaCargaActiva() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Botón Tabla 24 Horas
                         Button(
                             onClick = {
-                                cargandoTabla = true
-                                modalTablaAbierto = true
+                                tablaUnidadEspecifica = null; cargandoTabla =
+                                true; modalTablaAbierto = true
                                 coroutineScope.launch {
                                     try {
-                                        datos24h = if (esModoMock) {
-                                            ApiClient.getMockData24h()
-                                        } else {
-                                            ApiClient.apiService.getCargaActiva24h()
-                                        }
+                                        datos24h =
+                                            if (esModoMock) ApiClient.getMockData24h() else ApiClient.apiService.getCargaActiva24h()
                                     } catch (e: Exception) {
                                         datos24h = emptyList()
                                     } finally {
@@ -323,9 +288,7 @@ fun PantallaCargaActiva() {
                                 .fillMaxWidth()
                                 .height(60.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1E88E5)
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
                         ) {
                             Text(
                                 text = "Tabla Últimas 24 Horas",
@@ -344,20 +307,14 @@ fun PantallaCargaActiva() {
                             .height(400.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(48.dp),
                                 color = Color.White,
                                 strokeWidth = 4.dp
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Cargando datos...",
-                                fontSize = 18.sp,
-                                color = Color.White
-                            )
+                            Text(text = "Cargando datos...", fontSize = 18.sp, color = Color.White)
                         }
                     }
                 }
@@ -367,29 +324,36 @@ fun PantallaCargaActiva() {
         // Modal de unidad
         if (modalAbierto) {
             val ultimaLectura = lecturas.lastOrNull()
-
             ModalUnidad(
                 unidadSeleccionada = unidadSeleccionada,
                 ultimaLectura = ultimaLectura,
                 onCerrar = { modalAbierto = false },
                 onVerGrafico = {
-                    mostrarUnidad1 = true
-                    mostrarUnidad2 = true
-                    mostrarUnidad3 = true
-                    graficoUnidadEspecifica = true
-                    cargandoGrafico = true
-                    modalGraficoAbierto = true
+                    mostrarUnidad1 = true; mostrarUnidad2 = true; mostrarUnidad3 = true
+                    graficoUnidadEspecifica = true; cargandoGrafico = true; modalGraficoAbierto =
+                    true
                     coroutineScope.launch {
                         try {
-                            datos24h = if (esModoMock) {
-                                ApiClient.getMockData24h()
-                            } else {
-                                ApiClient.apiService.getCargaActiva24h()
-                            }
+                            datos24h =
+                                if (esModoMock) ApiClient.getMockData24h() else ApiClient.apiService.getCargaActiva24h()
                         } catch (e: Exception) {
                             datos24h = emptyList()
                         } finally {
                             cargandoGrafico = false
+                        }
+                    }
+                },
+                onVerTabla = {
+                    tablaUnidadEspecifica = unidadSeleccionada; cargandoTabla =
+                    true; modalTablaAbierto = true
+                    coroutineScope.launch {
+                        try {
+                            datos24h =
+                                if (esModoMock) ApiClient.getMockData24h() else ApiClient.apiService.getCargaActiva24h()
+                        } catch (e: Exception) {
+                            datos24h = emptyList()
+                        } finally {
+                            cargandoTabla = false
                         }
                     }
                 }
@@ -422,7 +386,8 @@ fun PantallaCargaActiva() {
             ModalTabla24h(
                 onCerrar = { modalTablaAbierto = false },
                 datos24h = datos24h,
-                cargando = cargandoTabla
+                cargando = cargandoTabla,
+                unidadEspecifica = tablaUnidadEspecifica
             )
         }
     }
