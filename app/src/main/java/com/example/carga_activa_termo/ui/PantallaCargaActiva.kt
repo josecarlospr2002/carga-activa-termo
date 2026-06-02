@@ -22,6 +22,7 @@ import com.example.carga_activa_termo.utils.obtenerMensajeError
 import com.example.carga_activa_termo.ui.components.TarjetaUnidad
 import com.example.carga_activa_termo.ui.components.ModalUnidad
 import com.example.carga_activa_termo.ui.components.ModalGrafico24h
+import com.example.carga_activa_termo.ui.components.ModalTabla24h
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
@@ -45,6 +46,8 @@ fun PantallaCargaActiva() {
     var mostrarUnidad2 by remember { mutableStateOf(true) }
     var mostrarUnidad3 by remember { mutableStateOf(true) }
     var graficoUnidadEspecifica by remember { mutableStateOf(false) }
+    var modalTablaAbierto by remember { mutableStateOf(false) }
+    var cargandoTabla by remember { mutableStateOf(false) }
 
     fun cargarDatos() {
         coroutineScope.launch {
@@ -89,7 +92,7 @@ fun PantallaCargaActiva() {
                 .then(if (modalAbierto) Modifier.blur(24.dp) else Modifier),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier
@@ -135,7 +138,7 @@ fun PantallaCargaActiva() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (mensajeError != null) {
                 Card(
@@ -218,7 +221,7 @@ fun PantallaCargaActiva() {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     TarjetaUnidad(
                         numeroUnidad = 2,
@@ -229,7 +232,7 @@ fun PantallaCargaActiva() {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     TarjetaUnidad(
                         numeroUnidad = 3,
@@ -240,7 +243,7 @@ fun PantallaCargaActiva() {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -254,16 +257,15 @@ fun PantallaCargaActiva() {
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(28.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
+                        // Botón Gráfico 24 Horas
                         Button(
                             onClick = {
                                 mostrarUnidad1 = true
                                 mostrarUnidad2 = true
                                 mostrarUnidad3 = true
-
                                 graficoUnidadEspecifica = false
-
                                 cargandoGrafico = true
                                 modalGraficoAbierto = true
                                 coroutineScope.launch {
@@ -290,6 +292,43 @@ fun PantallaCargaActiva() {
                         ) {
                             Text(
                                 text = "Gráfico Últimas 24 Horas",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Botón Tabla 24 Horas
+                        Button(
+                            onClick = {
+                                cargandoTabla = true
+                                modalTablaAbierto = true
+                                coroutineScope.launch {
+                                    try {
+                                        datos24h = if (esModoMock) {
+                                            ApiClient.getMockData24h()
+                                        } else {
+                                            ApiClient.apiService.getCargaActiva24h()
+                                        }
+                                    } catch (e: Exception) {
+                                        datos24h = emptyList()
+                                    } finally {
+                                        cargandoTabla = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1E88E5)
+                            )
+                        ) {
+                            Text(
+                                text = "Tabla Últimas 24 Horas",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -375,6 +414,15 @@ fun PantallaCargaActiva() {
                 onMostrarUnidad3Change = { mostrarUnidad3 = it },
                 onSnackbarMensajeChange = { snackbarMensaje = it },
                 onSnackbarVisibleChange = { snackbarVisible = it }
+            )
+        }
+
+        // Modal Tabla 24 Horas
+        if (modalTablaAbierto) {
+            ModalTabla24h(
+                onCerrar = { modalTablaAbierto = false },
+                datos24h = datos24h,
+                cargando = cargandoTabla
             )
         }
     }
