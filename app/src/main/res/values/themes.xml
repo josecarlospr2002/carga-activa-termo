@@ -2,7 +2,12 @@
 <resources>
 
     <style name="Theme.Carga_Activa_Termo" parent="android:Theme.Material.Light.NoActionBar">
+    </style>
+
+    <style name="Theme.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
         <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 
 </resources>
