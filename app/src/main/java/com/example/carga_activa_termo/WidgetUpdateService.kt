@@ -80,22 +80,34 @@ class WidgetUpdateService : Service() {
         for (id in idsSimple) {
             val views = RemoteViews(packageName, R.layout.widget_simple)
             if (ultima != null) {
-                val v1 = if (ultima.lec1 == null || ultima.lec1 <= 0) 0 else ultima.lec1.roundToInt()
-                val v2 = if (ultima.lec2 == null || ultima.lec2 <= 0) 0 else ultima.lec2.roundToInt()
-                val v3 = if (ultima.lec3 == null || ultima.lec3 <= 0) 0 else ultima.lec3.roundToInt()
-                views.setTextViewText(R.id.tv_unidad1, "U.1 = $v1")
-                views.setTextViewText(R.id.tv_unidad2, "U.2 = $v2")
-                views.setTextViewText(R.id.tv_unidad3, "U.3 = $v3")
+                val valorU1 =
+                    if (ultima.lec1 == null) "-" else if (ultima.lec1 <= 0) "0" else ultima.lec1.roundToInt()
+                        .toString()
+                val valorU2 =
+                    if (ultima.lec2 == null) "-" else if (ultima.lec2 <= 0) "0" else ultima.lec2.roundToInt()
+                        .toString()
+                val valorU3 =
+                    if (ultima.lec3 == null) "-" else if (ultima.lec3 <= 0) "0" else ultima.lec3.roundToInt()
+                        .toString()
+                views.setTextViewText(R.id.tv_unidad1, "Un.1: $valorU1")
+                views.setTextViewText(R.id.tv_unidad2, "Un.2: $valorU2")
+                views.setTextViewText(R.id.tv_unidad3, "Un.3: $valorU3")
                 views.setTextViewText(R.id.tv_hora, ultima.hora ?: "--:--")
                 views.setTextViewText(R.id.tv_estado, "Actualizar")
+                views.setInt(R.id.spinner_icono, "setVisibility", View.GONE)
+                views.setInt(R.id.icono_actualizar, "setVisibility", View.VISIBLE)
+                views.setTextViewText(R.id.icono_actualizar, "⟳")
                 views.setImageViewResource(R.id.circulo_estado, R.drawable.circulo_azul)
                 views.setInt(R.id.circulo_estado, "setVisibility", View.VISIBLE)
             } else {
-                views.setTextViewText(R.id.tv_unidad1, "U.1 = -")
-                views.setTextViewText(R.id.tv_unidad2, "U.2 = -")
-                views.setTextViewText(R.id.tv_unidad3, "U.3 = -")
+                views.setTextViewText(R.id.tv_unidad1, "Un.1: -")
+                views.setTextViewText(R.id.tv_unidad2, "Un.2: -")
+                views.setTextViewText(R.id.tv_unidad3, "Un.3: -")
                 views.setTextViewText(R.id.tv_hora, "--:--")
                 views.setTextViewText(R.id.tv_estado, "Sin datos")
+                views.setInt(R.id.spinner_icono, "setVisibility", View.GONE)
+                views.setInt(R.id.icono_actualizar, "setVisibility", View.VISIBLE)
+                views.setTextViewText(R.id.icono_actualizar, "⟳")
                 views.setImageViewResource(R.id.circulo_estado, R.drawable.circulo_rojo)
                 views.setInt(R.id.circulo_estado, "setVisibility", View.VISIBLE)
             }
@@ -123,11 +135,14 @@ class WidgetUpdateService : Service() {
         val idsSimple = appWidgetManager.getAppWidgetIds(componenteSimple)
         for (id in idsSimple) {
             val views = RemoteViews(packageName, R.layout.widget_simple)
-            views.setTextViewText(R.id.tv_unidad1, "U.1 = -")
-            views.setTextViewText(R.id.tv_unidad2, "U.2 = -")
-            views.setTextViewText(R.id.tv_unidad3, "U.3 = -")
+            views.setTextViewText(R.id.tv_unidad1, "Un.1: -")
+            views.setTextViewText(R.id.tv_unidad2, "Un.2: -")
+            views.setTextViewText(R.id.tv_unidad3, "Un.3: -")
             views.setTextViewText(R.id.tv_hora, "--:--")
             views.setTextViewText(R.id.tv_estado, "Error")
+            views.setInt(R.id.spinner_icono, "setVisibility", View.GONE)
+            views.setInt(R.id.icono_actualizar, "setVisibility", View.VISIBLE)
+            views.setTextViewText(R.id.icono_actualizar, "⟳")
             views.setImageViewResource(R.id.circulo_estado, R.drawable.circulo_negro)
             views.setInt(R.id.circulo_estado, "setVisibility", View.VISIBLE)
             views.setInt(R.id.spinner, "setVisibility", View.GONE)
@@ -155,6 +170,13 @@ class WidgetUpdateService : Service() {
     }
 
     private fun configurarClicksSimple(views: RemoteViews, widgetId: Int) {
+        val intentApp = Intent(this, MainActivity::class.java)
+        val pendingIntentApp = android.app.PendingIntent.getActivity(
+            this, widgetId, intentApp,
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.iv_logo, pendingIntentApp)
+
         val intentActualizar = Intent(this, CargaActivaWidgetSimple::class.java).apply {
             action = "ACTUALIZAR_WIDGET_SIMPLE"
         }

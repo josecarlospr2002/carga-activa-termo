@@ -325,13 +325,13 @@ fun ModalTabla24h(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 6.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -346,7 +346,7 @@ fun ModalTabla24h(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 6.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -361,7 +361,7 @@ fun ModalTabla24h(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 6.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -383,7 +383,6 @@ fun ModalTabla24h(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Botón Atrás
                     if (onAtras != null) {
                         Button(
                             onClick = { onAtras() },
@@ -402,7 +401,6 @@ fun ModalTabla24h(
                         }
                     }
 
-                    // Botón Cerrar
                     Button(
                         onClick = { onCerrar() },
                         modifier = Modifier

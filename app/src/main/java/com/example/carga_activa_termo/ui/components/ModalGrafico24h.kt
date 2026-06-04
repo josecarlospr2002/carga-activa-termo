@@ -147,7 +147,7 @@ fun ModalGrafico24h(
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 1.dp)
+                                            .padding(vertical = 9.dp)
                                     )
                                 }
                             }

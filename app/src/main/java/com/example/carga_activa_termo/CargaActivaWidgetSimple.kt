@@ -17,11 +17,14 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
     ) {
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.widget_simple)
-            views.setTextViewText(R.id.tv_unidad1, "U.1 = -")
-            views.setTextViewText(R.id.tv_unidad2, "U.2 = -")
-            views.setTextViewText(R.id.tv_unidad3, "U.3 = -")
+            views.setTextViewText(R.id.tv_unidad1, "Un.1: -")
+            views.setTextViewText(R.id.tv_unidad2, "Un.2: -")
+            views.setTextViewText(R.id.tv_unidad3, "Un.3: -")
             views.setTextViewText(R.id.tv_hora, "--:--")
             views.setTextViewText(R.id.tv_estado, "Actualizar")
+            views.setTextViewText(R.id.icono_actualizar, "⟳")
+            views.setInt(R.id.icono_actualizar, "setVisibility", View.VISIBLE)
+            views.setInt(R.id.spinner_icono, "setVisibility", View.GONE)
             views.setInt(R.id.spinner, "setVisibility", View.GONE)
             views.setInt(R.id.circulo_estado, "setVisibility", View.INVISIBLE)
 
@@ -35,11 +38,14 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
 
         if (intent.action == "ACTUALIZAR_WIDGET_SIMPLE") {
             val appWidgetManager = AppWidgetManager.getInstance(context)
-            val componentName = android.content.ComponentName(context, CargaActivaWidgetSimple::class.java)
+            val componentName =
+                android.content.ComponentName(context, CargaActivaWidgetSimple::class.java)
             val ids = appWidgetManager.getAppWidgetIds(componentName)
 
             for (id in ids) {
                 val views = RemoteViews(context.packageName, R.layout.widget_simple)
+                views.setInt(R.id.icono_actualizar, "setVisibility", View.GONE)
+                views.setInt(R.id.spinner_icono, "setVisibility", View.VISIBLE)
                 views.setTextViewText(R.id.tv_estado, "Cargando...")
                 views.setInt(R.id.spinner, "setVisibility", View.VISIBLE)
                 appWidgetManager.updateAppWidget(id, views)
@@ -55,6 +61,15 @@ class CargaActivaWidgetSimple : AppWidgetProvider() {
     }
 
     private fun configurarClicks(context: Context, views: RemoteViews, widgetId: Int) {
+        // Click en la imagen del Che → abre la app
+        val intentApp = Intent(context, MainActivity::class.java)
+        val pendingIntentApp = PendingIntent.getActivity(
+            context, widgetId, intentApp,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.iv_logo, pendingIntentApp)
+
+        // Click en el resto del widget → actualiza
         val intentActualizar = Intent(context, CargaActivaWidgetSimple::class.java).apply {
             action = "ACTUALIZAR_WIDGET_SIMPLE"
         }
